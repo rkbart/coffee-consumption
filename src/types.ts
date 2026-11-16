@@ -136,6 +136,17 @@ export interface DayResponse {
   sales: SaleEntry[];
 }
 
+export interface ShopSettings {
+  currency: string;
+}
+
+export interface DataCounts {
+  ingredients: number;
+  packaging: number;
+  products: number;
+  closings: number;
+}
+
 export interface Overview {
   closings: ClosingSummary[];
   latest: ClosingDetail | null;
@@ -143,6 +154,7 @@ export interface Overview {
 }
 
 export type ReportPeriod =
+  | "today"
   | "week"
   | "last-week"
   | "month"

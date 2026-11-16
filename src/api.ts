@@ -1,6 +1,7 @@
 import type {
   ClosingDetail,
   ClosingSummary,
+  DataCounts,
   DayResponse,
   EndingReport,
   Ingredient,
@@ -8,6 +9,7 @@ import type {
   PackagingMaterial,
   Product,
   ShiftId,
+  ShopSettings,
   Unit,
 } from "./types";
 
@@ -60,6 +62,22 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  settings: () => request<ShopSettings>("/api/settings"),
+  updateSettings: (body: ShopSettings) =>
+    request<ShopSettings>("/api/settings", {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+  importBackup: (csv: string) =>
+    request<{ ok: boolean; counts: DataCounts }>("/api/import", {
+      method: "POST",
+      body: JSON.stringify({ csv }),
+    }),
+  loadDemo: () =>
+    request<{ ok: boolean; counts: DataCounts }>("/api/demo", { method: "POST" }),
+  resetDatabase: () =>
+    request<{ ok: boolean; counts: DataCounts }>("/api/reset", { method: "POST" }),
+
   ingredients: () => request<Ingredient[]>("/api/ingredients"),
   createIngredient: (body: IngredientInput) =>
     request<Ingredient>("/api/ingredients", {

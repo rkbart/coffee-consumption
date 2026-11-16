@@ -100,7 +100,47 @@ db.exec(`
     size_label    TEXT NOT NULL DEFAULT '',
     quantity      INTEGER NOT NULL DEFAULT 0
   );
+
+  CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
 `);
+
+db.prepare(
+  "INSERT OR IGNORE INTO settings (key, value) VALUES ('currency', '₱')",
+).run();
+
+export const DEFAULT_CURRENCY = "₱";
+
+export function getSettings() {
+  const rows = db.prepare("SELECT key, value FROM settings").all();
+  const stored = Object.fromEntries(rows.map((row) => [row.key, row.value]));
+  return {
+    currency: stored.currency || DEFAULT_CURRENCY,
+  };
+}
+
+export function updateSettings({ currency }) {
+  if (currency !== undefined) {
+    db.prepare(
+      `INSERT INTO settings (key, value) VALUES ('currency', ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    ).run(currency);
+  }
+  return getSettings();
+}
+
+export function dataCounts() {
+  const count = (table) =>
+    Number(db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n);
+  return {
+    ingredients: count("ingredients"),
+    packaging: count("packaging"),
+    products: count("products"),
+    closings: count("closings"),
+  };
+}
 
 /* ----------------------------- migrations for databases created before cost */
 
@@ -736,13 +776,46 @@ function backfillSeedCosts() {
   }
 }
 
-export function seedIfEmpty() {
+export function runDataMaintenance() {
   backfillSeedCosts();
   backfillLegacyPackaging();
+}
 
-  const { n } = db.prepare("SELECT COUNT(*) AS n FROM ingredients").get();
-  if (n > 0) return false;
+/** Delete business data, leaving shop settings such as the currency intact. */
+export function clearBusinessData() {
+  for (const table of [
+    "closing_sales",
+    "closing_lines",
+    "closings",
+    "product_packaging",
+    "recipe_items",
+    "products",
+    "packaging",
+    "ingredients",
+  ]) {
+    db.exec(`DELETE FROM ${table}`);
+  }
+  db.exec(`
+    DELETE FROM sqlite_sequence
+     WHERE name IN ('closing_sales', 'closing_lines', 'closings',
+                    'product_packaging', 'recipe_items', 'products',
+                    'packaging', 'ingredients')
+  `);
+}
 
+export function resetDatabase() {
+  db.exec("BEGIN");
+  try {
+    clearBusinessData();
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
+/** Insert the demonstration catalogue and history. The caller resets first. */
+function insertDemoData() {
   db.exec("BEGIN");
   try {
     const insertIngredient = db.prepare(
@@ -856,5 +929,11 @@ export function seedIfEmpty() {
     "Variance looks like one cappuccino that never hit the till — two comps for the roaster visit.",
   );
 
-  return true;
+}
+
+/** Replace all business data with the sample catalogue and three closings. */
+export function seedDemoData() {
+  resetDatabase();
+  insertDemoData();
+  return dataCounts();
 }

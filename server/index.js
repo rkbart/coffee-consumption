@@ -3,27 +3,34 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  dataCounts,
   db,
   getIngredients,
   getPackaging,
   getProducts,
   getClosingByDate,
   getClosingDetail,
+  getSettings,
   closingsForDate,
   listClosings,
   previousClosingFor,
   reportForRange,
+  resetDatabase,
+  runDataMaintenance,
   saveClosing,
-  seedIfEmpty,
+  seedDemoData,
+  updateSettings,
 } from "./db.js";
+import { exportBackupCsv, importBackupCsv } from "./backup.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "25mb" }));
 
-seedIfEmpty();
+// Upgrade older databases without adding example business data to a new shop.
+runDataMaintenance();
 
 const fail = (res, status, message) => res.status(status).json({ error: message });
 const asNumber = (value, fallback = 0) => {
@@ -61,6 +68,52 @@ function pricingData(body, existing = {}) {
         : nonNegative(rawPrice, 0),
   };
 }
+
+/* --------------------------------------------------------------- settings */
+
+app.get("/api/settings", (_req, res) => {
+  res.json(getSettings());
+});
+
+app.put("/api/settings", (req, res) => {
+  const currency = String(req.body?.currency ?? "").trim();
+  if (!currency) return fail(res, 400, "Currency is required");
+  if (currency.length > 8) return fail(res, 400, "Currency must be 8 characters or fewer");
+  res.json(updateSettings({ currency }));
+});
+
+/* ------------------------------------------------------ backup / restore */
+
+app.get("/api/backup.csv", (_req, res) => {
+  const date = new Date().toISOString().slice(0, 10);
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="brew-ledger-backup-${date}.csv"`,
+  );
+  res.send(`\uFEFF${exportBackupCsv()}`);
+});
+
+app.post("/api/import", (req, res) => {
+  const csv = req.body?.csv;
+  if (typeof csv !== "string" || !csv.trim())
+    return fail(res, 400, "Choose a Brew Ledger backup CSV to import");
+  try {
+    const counts = importBackupCsv(csv);
+    res.json({ ok: true, counts });
+  } catch (error) {
+    return fail(res, 400, error instanceof Error ? error.message : "Could not import the backup");
+  }
+});
+
+app.post("/api/demo", (_req, res) => {
+  res.json({ ok: true, counts: seedDemoData() });
+});
+
+app.post("/api/reset", (_req, res) => {
+  resetDatabase();
+  res.json({ ok: true, counts: dataCounts() });
+});
 
 /* ------------------------------------------------------------ ingredients */
 

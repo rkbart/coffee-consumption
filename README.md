@@ -83,8 +83,25 @@ npm run build
 npm start          # serves the built UI and API from :4000
 ```
 
-The database lives at `data/brew.db` and is created and seeded automatically on
-first boot. Delete that file to start over. Set `BREW_DB_PATH` to put it elsewhere.
+The database lives at `data/brew.db` and is created automatically on first boot.
+A new shop starts with an empty database. Set `BREW_DB_PATH` to put it elsewhere.
+
+## Data, backups and moving machines
+
+Open **Settings** to choose the currency symbol, export a CSV backup, restore one,
+load the optional demo café, or reset all business data. New databases stay empty
+until the shop adds its own ingredients and menu; the demo is never inserted
+automatically.
+
+The backup CSV contains the costing library, packaging, beverages, recipe links,
+every shift closing with its snapshot lines and sales, and the currency setting.
+Import replaces the current business data in one transaction, so an invalid file
+leaves the existing database untouched. The file is excluded from Git along with
+the SQLite database, so each machine or deployment still needs its own backup or
+persistent database storage.
+
+Reset keeps the currency setting but permanently removes the catalogue and closing
+history. Export first if the data may be needed again.
 
 ## Pages
 
@@ -101,19 +118,26 @@ first boot. Delete that file to start over. Set `BREW_DB_PATH` to put it elsewhe
   closing, units sold with debounced search, menu-group filtering and pagination,
   live theoretical vs actual comparison and shift notes. Each shift saves its own
   immutable snapshot.
-- **Ending report** — aggregates saved closings over a week, month, year, year-to-date,
-  last 30 days or a custom range. Shows opening and ending stock, deliveries, waste,
+- **Ending report** — aggregates saved closings over today, a week, month, year,
+  year-to-date, last 30 days or a custom range. Shows opening and ending stock, deliveries, waste,
   actual vs theoretical usage, variance, the preparer for every shift, sales and shift
   notes. The date range lives in
   the URL, so the report can be shared; a print stylesheet produces a clean landscape
   handout for the owner or manager.
 - **History** — immutable snapshots of each saved closing, searchable by date or note.
+- **Settings** — display currency, CSV backup and restore, optional demo data, and a
+  confirmation-protected reset danger zone.
 
 ## API
 
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/api/overview` | Dashboard payload |
+| GET/PUT | `/api/settings` | Read / update shop settings such as currency |
+| GET | `/api/backup.csv` | Download all business data as a CSV backup |
+| POST | `/api/import` | Validate and restore a CSV backup, replacing current data |
+| POST | `/api/demo` | Replace business data with the sample café |
+| POST | `/api/reset` | Delete all business data, keeping shop settings |
 | GET/POST | `/api/ingredients` | List / create ingredients, including made-in-house bases |
 | PUT/DELETE | `/api/ingredients/:id` | Edit / delete (blocked if used in a recipe) |
 | GET/POST | `/api/packaging` | List / create packaging materials |
@@ -129,11 +153,12 @@ first boot. Delete that file to start over. Set `BREW_DB_PATH` to put it elsewhe
 
 ```
 server/
-  db.js        schema, queries, seed data
+  db.js        schema, queries, demo seed
+  backup.js    CSV backup export and validated restore
   variance.js  the usage and variance math
   index.js     Express API and static serving
 src/
-  pages/       Dashboard, Recipes, Library, Inventory, Report, History
+  pages/       Dashboard, Recipes, Library, Inventory, Report, History, Settings
   components/  modal, header, variance pill, icons
   lib.ts       formatting, recipe costing, client-side variance mirror
 ```

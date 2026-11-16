@@ -21,6 +21,7 @@ import {
 } from "../components/Icons";
 
 const PERIODS: { id: ReportPeriod; label: string }[] = [
+  { id: "today", label: "Today" },
   { id: "week", label: "This week" },
   { id: "last-week", label: "Last week" },
   { id: "month", label: "This month" },
@@ -51,17 +52,18 @@ export default function Report() {
   const monthRange = reportRange("month");
   const today = todayISO();
 
-  const initialFrom = isISODate(searchParams.get("from"))
-    ? (searchParams.get("from") as string)
-    : monthRange.from;
-  const initialTo = isISODate(searchParams.get("to"))
-    ? (searchParams.get("to") as string)
-    : monthRange.to;
   const initialPeriod = isReportPeriod(searchParams.get("period"))
     ? (searchParams.get("period") as ReportPeriod)
     : searchParams.get("from")
       ? "custom"
       : "month";
+  const initialRange = reportRange(initialPeriod === "custom" ? "month" : initialPeriod);
+  const initialFrom = isISODate(searchParams.get("from"))
+    ? (searchParams.get("from") as string)
+    : initialRange.from;
+  const initialTo = isISODate(searchParams.get("to"))
+    ? (searchParams.get("to") as string)
+    : initialRange.to;
 
   const [from, setFrom] = useState(initialFrom);
   const [to, setTo] = useState(initialTo);

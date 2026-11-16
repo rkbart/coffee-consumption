@@ -11,7 +11,31 @@ import type {
   Unit,
 } from "./types";
 
-export const CURRENCY = "₱";
+export const DEFAULT_CURRENCY = "₱";
+
+let currencySymbol = (() => {
+  try {
+    return localStorage.getItem("brew-currency") || DEFAULT_CURRENCY;
+  } catch {
+    return DEFAULT_CURRENCY;
+  }
+})();
+
+export const getCurrencySymbol = () => currencySymbol;
+
+export function setCurrencySymbol(value: string) {
+  currencySymbol = value.trim() || DEFAULT_CURRENCY;
+  try {
+    localStorage.setItem("brew-currency", currencySymbol);
+  } catch {
+    /* storage can be unavailable in private or embedded contexts */
+  }
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("brew-currency", { detail: currencySymbol }),
+    );
+  }
+}
 
 export const SHIFTS: { id: ShiftId; short: string; label: string; time: string }[] = [
   { id: "am", short: "AM", label: "Morning", time: "6am – 12pm" },
@@ -43,7 +67,7 @@ export function currentShift(now = new Date()): ShiftId {
 export const round2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
 
 export const money = (n: number, digits = 2) =>
-  `${n < 0 ? "−" : ""}${CURRENCY}${new Intl.NumberFormat("en-US", {
+  `${n < 0 ? "−" : ""}${currencySymbol}${new Intl.NumberFormat("en-US", {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   }).format(Math.abs(round2(n)))}`;
@@ -121,6 +145,8 @@ export function reportRange(period: ReportPeriod, today = todayISO()) {
   const month = d.getMonth();
 
   switch (period) {
+    case "today":
+      return { from: today, to: today };
     case "week":
       return { from: startOfWeek(today), to: today };
     case "last-week": {

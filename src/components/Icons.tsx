@@ -151,6 +151,31 @@ export const IconReport = ({ size, className }: IconProps) => (
   </svg>
 );
 
+export const IconSettings = ({ size, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M4 7h8M16 7h4M4 17h3M11 17h9M14 4v6M8 14v6" />
+  </svg>
+);
+
+export const IconDownload = ({ size, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M12 3v12m-5-5 5 5 5-5M5 21h14" />
+  </svg>
+);
+
+export const IconUpload = ({ size, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M12 16V4m-5 5 5-5 5 5M5 21h14" />
+  </svg>
+);
+
+export const IconDatabase = ({ size, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <ellipse cx="12" cy="5.5" rx="7" ry="3" />
+    <path d="M5 5.5v13c0 1.7 3.1 3 7 3s7-1.3 7-3v-13M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3" />
+  </svg>
+);
+
 export const IconSpark = ({ size, className }: IconProps) => (
   <svg {...base(size)} className={className}>
     <path d="m12 3 1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4L12 3ZM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z" />
