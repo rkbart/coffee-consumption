@@ -6,11 +6,14 @@ import "./styles.css";
 import { migrationsReady } from "./db/client";
 import { seed } from "./db/seed";
 
-// Boot: wait for the OPFS database schema to exist, ensure the default shop
-// settings (currency), then render. One browser, one profile — no users, no
-// auth, no server round-trip.
-migrationsReady
-  .then(() => seed())
+const BOOT_TIMEOUT_MS = 10_000;
+
+const boot = () => migrationsReady.then(() => seed());
+const timeout = new Promise<never>((_, reject) =>
+  setTimeout(() => reject(new Error("Database initialization timed out")), BOOT_TIMEOUT_MS),
+);
+
+Promise.race([boot(), timeout])
   .then(() => {
     sessionStorage.removeItem("route-error:auto-reloaded");
     createRoot(document.getElementById("root")!).render(
@@ -23,6 +26,5 @@ migrationsReady
   })
   .catch((err) => {
     console.error("Failed to initialize database:", err);
-    document.getElementById("root")!.innerHTML =
-      '<p>Something went wrong setting up the app. Check the console.</p>';
+    document.getElementById("root")!.innerHTML = `<p style="color:red">Something went wrong setting up the app: ${(err as Error).message}</p>`;
   });
