@@ -273,15 +273,15 @@ export default function Library() {
                   <table>
                     <thead>
                       <tr>
-                        <th>Material</th>
-                        <th>Brand / notes</th>
-                        <th>Pack price</th>
-                        <th>Pack size</th>
-                        <th>Price / piece</th>
-                        <th>Qty / drink</th>
-                        <th>Cost / drink</th>
-                        <th>Unit</th>
-                        <th />
+                        <th scope="col">Material</th>
+                        <th scope="col">Brand / notes</th>
+                        <th scope="col" className="numeric">Pack price</th>
+                        <th scope="col" className="numeric">Pack size</th>
+                        <th scope="col" className="numeric">Price / piece</th>
+                        <th scope="col" className="numeric">Qty / drink</th>
+                        <th scope="col" className="numeric cost-amount">Cost / drink</th>
+                        <th scope="col">Unit</th>
+                        <th scope="col" className="packaging-actions-col" />
                       </tr>
                     </thead>
                     <tbody>
@@ -289,7 +289,7 @@ export default function Library() {
                         const unitCost = packagingUnitCost(material);
                         const totalCost = packagingTotalCost(material);
                         return (
-                          <tr key={material.id} className="packaging-row">
+                          <tr key={material.id} className="packaging-row" data-id={material.id}>
                             <td>
                               <button
                                 type="button"
@@ -322,7 +322,7 @@ export default function Library() {
                             <td className="unit-chip">
                               {unitLabel(material.unit)}
                             </td>
-                            <td className="packaging-list-actions">
+                            <td className="packaging-actions-col">
                               <button
                                 type="button"
                                 className="icon-btn"
@@ -353,7 +353,7 @@ export default function Library() {
                   </table>
                   <tfoot>
                     <tr className="packaging-totals">
-                      <td colSpan={6} className="label">
+                      <td colSpan={7} className="label">
                         Total packaging cost per drink:
                       </td>
                       <td className="numeric total">
