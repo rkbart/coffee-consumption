@@ -64,23 +64,7 @@ export default function App({ dbReady }: { dbReady: Promise<void> }) {
       });
   }, [dbReady]);
 
-  if (!dbLoaded) {
-    return (
-      <div className="app-shell" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: "system-ui, sans-serif" }}>
-        <p>Opening database…</p>
-      </div>
-    );
-  }
-
-  if (dbError) {
-    return (
-      <div className="app-shell" style={{ padding: "1rem", fontFamily: "system-ui, sans-serif", color: "red" }}>
-        <p>Something went wrong setting up the app: {dbError}</p>
-      </div>
-    );
-  }
-
-  return (
+  const shell = (
     <div className="app-shell" data-currency={currency}>
       <aside className="sidebar">
         <div className="brand">
@@ -122,27 +106,41 @@ export default function App({ dbReady }: { dbReady: Promise<void> }) {
       </aside>
 
       <main className="main">
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/recipes" element={<Recipes />} />
-          <Route path="/library" element={<Library />} />
-          <Route path="/inventory" element={<Inventory />} />
-          <Route path="/report" element={<Report />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/history/:id" element={<History />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route
-            path="*"
-            element={
-              <div className="empty-state page-enter">
-                <h2>Page not found</h2>
-                <p>The page you were looking for is not on the menu.</p>
-              </div>
-            }
-          />
-        </Routes>
+        {dbLoaded ? (
+          dbError ? (
+            <div style={{ padding: "1rem", color: "red", fontFamily: "system-ui, sans-serif" }}>
+              <p>Something went wrong setting up the app: {dbError}</p>
+            </div>
+          ) : (
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/recipes" element={<Recipes />} />
+              <Route path="/library" element={<Library />} />
+              <Route path="/inventory" element={<Inventory />} />
+              <Route path="/report" element={<Report />} />
+              <Route path="/history" element={<History />} />
+              <Route path="/history/:id" element={<History />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route
+                path="*"
+                element={
+                  <div className="empty-state page-enter">
+                    <h2>Page not found</h2>
+                    <p>The page you were looking for is not on the menu.</p>
+                  </div>
+                }
+              />
+            </Routes>
+          )
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: "system-ui, sans-serif" }}>
+            <p>Opening database…</p>
+          </div>
+        )}
       </main>
       <BackToTop />
     </div>
   );
+
+  return shell;
 }
