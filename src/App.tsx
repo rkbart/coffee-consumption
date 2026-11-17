@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
-import { api } from "./api";
+import { settingsRepository } from "./repositories/settings-repository";
 import { getCurrencySymbol, setCurrencySymbol } from "./lib";
 import Dashboard from "./pages/Dashboard";
 import Recipes from "./pages/Recipes";
@@ -39,10 +39,11 @@ export default function App() {
       setCurrency((event as CustomEvent<string>).detail);
     };
     window.addEventListener("brew-currency", syncCurrency);
-    api
-      .settings()
-      .then((settings) => {
-        setCurrencySymbol(settings.currency);
+    settingsRepository
+      .getCurrency()
+      .then((currencyValue) => {
+        setCurrencySymbol(currencyValue);
+        setCurrency(currencyValue);
       })
       .catch(() => {
         /* the cached currency still lets the rest of the app render */

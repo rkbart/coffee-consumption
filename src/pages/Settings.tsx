@@ -77,6 +77,25 @@ export default function Settings() {
     }
   };
 
+  const exportBackup = async () => {
+    setError("");
+    try {
+      const csv = await api.exportBackup();
+      const blob = new Blob([csv], { type: "text/csv; charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `brew-ledger-backup-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setToast("Backup exported");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not export backup");
+    }
+  };
+
   const chooseFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -206,9 +225,9 @@ export default function Settings() {
               database.
             </p>
             <div className="settings-actions">
-              <a className="btn btn-primary" href="/api/backup.csv" download>
+              <button className="btn btn-primary" onClick={exportBackup}>
                 <IconDownload size={16} /> Export backup
-              </a>
+              </button>
               <label className="btn btn-quiet file-picker">
                 <IconUpload size={16} /> Import backup
                 <input

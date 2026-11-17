@@ -3,26 +3,25 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Cafe inventory variance tracker — recipe-based theoretical usage vs actual counts.",
+  "description": "Cafe inventory variance tracker \u2014 recipe-based theoretical usage vs actual counts.",
   "scripts": {
-    "dev": "concurrently -n api,web -c yellow,cyan \"node --watch server/index.js\" \"vite\"",
-    "dev:api": "node --watch server/index.js",
-    "dev:web": "vite",
+    "dev": "vite",
     "build": "tsc -b && vite build",
-    "start": "node server/index.js",
+    "start": "vite preview",
     "preview": "vite preview"
   },
   "dependencies": {
-    "express": "^5.1.0",
+    "drizzle-orm": "^0.45.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-router-dom": "^7.9.1"
+    "react-router-dom": "^7.9.1",
+    "sqlocal": "^0.18.0"
   },
   "devDependencies": {
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.2",
-    "concurrently": "^9.2.1",
+    "drizzle-kit": "^0.31.10",
     "typescript": "^5.9.2",
     "vite": "^7.1.5"
   }
