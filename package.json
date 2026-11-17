@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Cafe inventory variance tracker \u2014 recipe-based theoretical usage vs actual counts.",
+  "description": "Cafe inventory variance tracker — recipe-based theoretical usage vs actual counts.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "boneyard-js": "^1.10.0",
     "drizzle-orm": "^0.45.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

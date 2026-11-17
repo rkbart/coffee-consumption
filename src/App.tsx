@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
+import { Skeleton } from "boneyard-js/react";
 import { settingsRepository } from "./repositories/settings-repository";
 import { getCurrencySymbol, setCurrencySymbol } from "./lib";
 import Dashboard from "./pages/Dashboard";
@@ -64,7 +65,7 @@ export default function App({ dbReady }: { dbReady: Promise<void> }) {
       });
   }, [dbReady]);
 
-  const shell = (
+  return (
     <div className="app-shell" data-currency={currency}>
       <aside className="sidebar">
         <div className="brand">
@@ -106,59 +107,89 @@ export default function App({ dbReady }: { dbReady: Promise<void> }) {
       </aside>
 
       <main className="main">
-        {dbLoaded ? (
-          dbError ? (
-            <div style={{ padding: "1rem", color: "red", fontFamily: "system-ui, sans-serif" }}>
-              <p>Something went wrong setting up the app: {dbError}</p>
-            </div>
-          ) : (
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/recipes" element={<Recipes />} />
-              <Route path="/library" element={<Library />} />
-              <Route path="/inventory" element={<Inventory />} />
-              <Route path="/report" element={<Report />} />
-              <Route path="/history" element={<History />} />
-              <Route path="/history/:id" element={<History />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route
-                path="*"
-                element={
-                  <div className="empty-state page-enter">
-                    <h2>Page not found</h2>
-                    <p>The page you were looking for is not on the menu.</p>
-                  </div>
-                }
-              />
-            </Routes>
-          )
-        ) : (
-          <div className="skeleton-layout">
-            <div className="skeleton-main">
-              <div className="skeleton-title" />
-              <div className="skeleton-hero" />
-              <div className="skeleton-metrics">
-                <div className="skeleton-metric" />
-                <div className="skeleton-metric" />
-                <div className="skeleton-metric" />
-              </div>
-              <div className="skeleton-list">
-                <div className="skeleton-item" />
-                <div className="skeleton-item" />
-                <div className="skeleton-item" />
-              </div>
-            </div>
-            <div className="skeleton-aside">
-              <div className="skeleton-aside-card" />
-              <div className="skeleton-aside-card" />
-              <div className="skeleton-aside-card" />
-            </div>
+        {dbError ? (
+          <div style={{ padding: "1rem", color: "red", fontFamily: "system-ui, sans-serif" }}>
+            <p>Something went wrong setting up the app: {dbError}</p>
           </div>
+        ) : (
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <Skeleton name="dashboard" loading={!dbLoaded}>
+                  <Dashboard />
+                </Skeleton>
+              }
+            />
+            <Route
+              path="/recipes"
+              element={
+                <Skeleton name="recipes" loading={!dbLoaded}>
+                  <Recipes />
+                </Skeleton>
+              }
+            />
+            <Route
+              path="/library"
+              element={
+                <Skeleton name="library" loading={!dbLoaded}>
+                  <Library />
+                </Skeleton>
+              }
+            />
+            <Route
+              path="/inventory"
+              element={
+                <Skeleton name="inventory" loading={!dbLoaded}>
+                  <Inventory />
+                </Skeleton>
+              }
+            />
+            <Route
+              path="/report"
+              element={
+                <Skeleton name="report" loading={!dbLoaded}>
+                  <Report />
+                </Skeleton>
+              }
+            />
+            <Route
+              path="/history"
+              element={
+                <Skeleton name="history" loading={!dbLoaded}>
+                  <History />
+                </Skeleton>
+              }
+            />
+            <Route
+              path="/history/:id"
+              element={
+                <Skeleton name="history-detail" loading={!dbLoaded}>
+                  <History />
+                </Skeleton>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <Skeleton name="settings" loading={!dbLoaded}>
+                  <Settings />
+                </Skeleton>
+              }
+            />
+            <Route
+              path="*"
+              element={
+                <div className="empty-state page-enter">
+                  <h2>Page not found</h2>
+                  <p>The page you were looking for is not on the menu.</p>
+                </div>
+              }
+            />
+          </Routes>
         )}
       </main>
       <BackToTop />
     </div>
   );
-
-  return shell;
 }
