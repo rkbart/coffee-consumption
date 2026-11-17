@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import PageHeader from "../components/PageHeader";
+import Modal from "../components/Modal";
 import Pagination from "../components/Pagination";
 import SearchField from "../components/SearchField";
 import {
@@ -10,7 +11,7 @@ import { useDebouncedValue } from "../hooks";
 import { api } from "../api";
 import type { Ingredient, PackagingMaterial } from "../types";
 import { fmt, money, unitLabel, unitMoney } from "../lib";
-import { IconCoffee, IconMilk, IconPlus } from "../components/Icons";
+import { IconCoffee, IconMilk, IconPlus, IconEdit, IconTrash } from "../components/Icons";
 
 const PER_PAGE = 12;
 
@@ -41,6 +42,7 @@ export default function Library() {
   const [packagingModal, setPackagingModal] = useState<PackagingMaterial | "new" | null>(
     null,
   );
+  const [pendingDelete, setPendingDelete] = useState<PackagingMaterial | null>(null);
   const [toast, setToast] = useState("");
 
   const load = async () => {
@@ -279,6 +281,7 @@ export default function Library() {
                         <th>Qty / drink</th>
                         <th>Cost / drink</th>
                         <th>Unit</th>
+                        <th />
                       </tr>
                     </thead>
                     <tbody>
@@ -288,7 +291,13 @@ export default function Library() {
                         return (
                           <tr key={material.id} className="packaging-row">
                             <td>
-                              <span className="ingredient-name">{material.name}</span>
+                              <button
+                                type="button"
+                                className="packaging-name-link"
+                                onClick={() => setPackagingModal(material)}
+                              >
+                                <span className="ingredient-name">{material.name}</span>
+                              </button>
                             </td>
                             <td className="muted small">
                               {material.description || "—"}
@@ -313,6 +322,30 @@ export default function Library() {
                             <td className="unit-chip">
                               {unitLabel(material.unit)}
                             </td>
+                            <td className="packaging-list-actions">
+                              <button
+                                type="button"
+                                className="icon-btn"
+                                aria-label={`Edit ${material.name}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPackagingModal(material);
+                                }}
+                              >
+                                <IconEdit size={15} />
+                              </button>
+                              <button
+                                type="button"
+                                className="icon-btn danger"
+                                aria-label={`Delete ${material.name}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPendingDelete(material);
+                                }}
+                              >
+                                <IconTrash size={15} />
+                              </button>
+                            </td>
                           </tr>
                         );
                       })}
@@ -331,6 +364,7 @@ export default function Library() {
                           ),
                         )}
                       </td>
+                      <td />
                       <td />
                     </tr>
                   </tfoot>
@@ -369,6 +403,42 @@ export default function Library() {
         />
 
         {toast && <div className="toast">{toast}</div>}
+
+        <Modal
+          open={Boolean(pendingDelete)}
+          title="Remove packaging?"
+          subtitle="Past recipes keep their snapshot, so cost history is not affected."
+          onClose={() => setPendingDelete(null)}
+        >
+          <p className="confirm-copy">
+            <strong>{pendingDelete?.name}</strong> will be removed from your
+            packaging list and from any recipes that use it.
+          </p>
+          <div className="form-actions">
+            <button className="btn btn-quiet" onClick={() => setPendingDelete(null)}>
+              Keep it
+            </button>
+            <button
+              className="btn btn-danger"
+              onClick={async () => {
+                if (!pendingDelete) return;
+                try {
+                  await api.deletePackaging(pendingDelete.id);
+                  setPendingDelete(null);
+                  setToast(`${pendingDelete.name} removed`);
+                  await load();
+                } catch (err) {
+                  setPendingDelete(null);
+                  setToast(
+                    err instanceof Error ? err.message : "Could not delete packaging",
+                  );
+                }
+              }}
+            >
+              Remove packaging
+            </button>
+          </div>
+        </Modal>
       </section>
     </>
   );
