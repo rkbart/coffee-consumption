@@ -40,6 +40,14 @@ CREATE TABLE IF NOT EXISTS packaging (
 
 --> statement-breakpoint
 
+ALTER TABLE packaging ADD COLUMN description TEXT NOT NULL DEFAULT '';
+
+--> statement-breakpoint
+
+ALTER TABLE packaging ADD COLUMN qty_needed REAL NOT NULL DEFAULT 1;
+
+--> statement-breakpoint
+
 CREATE TABLE IF NOT EXISTS products (
   id                   INTEGER PRIMARY KEY AUTOINCREMENT,
   name                 TEXT NOT NULL,
