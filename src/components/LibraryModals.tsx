@@ -232,10 +232,12 @@ export function IngredientModal({
 
 export function PackagingModal({
   editing,
+  packagingSets,
   onClose,
   onSaved,
 }: {
   editing: PackagingMaterial | "new" | null;
+  packagingSets: PackagingMaterial[];
   onClose: () => void;
   onSaved: (message: string) => void;
 }) {
@@ -279,11 +281,14 @@ export function PackagingModal({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [mergeIds, setMergeIds] = useState<number[]>([]);
 
   useEffect(() => {
     setSetName(material?.name ?? "");
     setSetDescription(material?.description ?? "");
     setRows(material ? material.components.map(rowFromComponent) : [emptyRow()]);
+    setMergeIds([]);
+    setError("");
   }, [material]);
 
   const addRow = () => setRows((prev) => [...prev, emptyRow()]);
@@ -354,10 +359,16 @@ export function PackagingModal({
       };
       if (material) {
         await api.updatePackaging(material.id, body);
-        onSaved(`${body.name} packaging set updated`);
+        if (mergeIds.length > 0) await api.mergePackaging(material.id, mergeIds);
+        onSaved(mergeIds.length > 0
+          ? `${mergeIds.length} packaging set${mergeIds.length === 1 ? "" : "s"} merged into ${body.name}`
+          : `${body.name} packaging set updated`);
       } else {
-        await api.createPackaging(body);
-        onSaved(`${body.name} packaging set added`);
+        const created = await api.createPackaging(body);
+        if (mergeIds.length > 0) await api.mergePackaging(created.id, mergeIds);
+        onSaved(mergeIds.length > 0
+          ? `${mergeIds.length} packaging set${mergeIds.length === 1 ? "" : "s"} merged into ${body.name}`
+          : `${body.name} packaging set added`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save packaging");
@@ -407,6 +418,32 @@ export function PackagingModal({
             />
           </label>
         </div>
+        {packagingSets.some((set) => set.id !== material?.id) && (
+          <section className="space-y-2 rounded-lg border border-line bg-surface-2 p-3">
+            <div>
+              <h3 className="text-sm font-semibold text-ink">Merge existing packaging entries</h3>
+              <p className="text-xs leading-relaxed text-muted">
+                Select old one-item entries to move into {setName.trim() || "this set"}. Their recipes will be updated to use this combined set.
+              </p>
+            </div>
+            <div className="grid max-h-36 grid-cols-1 gap-1 overflow-y-auto sm:grid-cols-2">
+              {packagingSets.filter((set) => set.id !== material?.id).map((set) => (
+                <label key={set.id} className="flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-surface">
+                  <input
+                    type="checkbox"
+                    checked={mergeIds.includes(set.id)}
+                    onChange={(event) => setMergeIds((current) => event.target.checked
+                      ? [...current, set.id]
+                      : current.filter((id) => id !== set.id))}
+                    className="accent-accent"
+                  />
+                  <span className="min-w-0 truncate font-medium text-ink">{set.name}</span>
+                  <span className="shrink-0 text-xs text-muted">{set.components.length} item{set.components.length === 1 ? "" : "s"}</span>
+                </label>
+              ))}
+            </div>
+          </section>
+        )}
         <div className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-2 border-b border-line pb-2">
             <div>

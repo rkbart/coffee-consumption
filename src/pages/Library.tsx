@@ -396,6 +396,7 @@ export default function Library() {
 
         <PackagingModal
           editing={packagingModal}
+          packagingSets={packaging}
           onClose={() => setPackagingModal(null)}
           onSaved={async (message) => {
             setPackagingModal(null);

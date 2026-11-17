@@ -1,5 +1,5 @@
 import { db } from '../db/client';
-import { packaging, packagingComponents } from '../db/schema';
+import { packaging, packagingComponents, productPackaging } from '../db/schema';
 import type { PackagingComponent, PackagingMaterial, Unit } from '../types';
 import { eq } from 'drizzle-orm';
 
@@ -94,5 +94,53 @@ export const packagingRepository = {
 
   delete(id: number) {
     return db.delete(packaging).where(eq(packaging.id, id));
+  },
+
+  async mergeInto(targetId: number, sourceIds: number[]): Promise<void> {
+    const ids = [...new Set(sourceIds)].filter((id) => id !== targetId);
+    if (ids.length === 0) return;
+
+    await db.transaction(async (tx) => {
+      const target = (await tx.select().from(packaging).where(eq(packaging.id, targetId)))[0];
+      if (!target) throw new Error('The packaging set to merge into no longer exists.');
+
+      const targetComponents = await tx.select().from(packagingComponents)
+        .where(eq(packagingComponents.packaging_id, targetId));
+      let nextSortOrder = targetComponents.reduce((max, row) => Math.max(max, row.sort_order), -1) + 1;
+
+      for (const sourceId of ids) {
+        const source = (await tx.select().from(packaging).where(eq(packaging.id, sourceId)))[0];
+        if (!source) continue;
+
+        const components = await tx.select().from(packagingComponents)
+          .where(eq(packagingComponents.packaging_id, sourceId));
+        for (const component of components) {
+          await tx.update(packagingComponents).set({
+            packaging_id: targetId,
+            sort_order: nextSortOrder++,
+          }).where(eq(packagingComponents.id, component.id));
+        }
+
+        const sourceLines = await tx.select().from(productPackaging)
+          .where(eq(productPackaging.packaging_id, sourceId));
+        for (const sourceLine of sourceLines) {
+          const targetLines = await tx.select().from(productPackaging)
+            .where(eq(productPackaging.product_id, sourceLine.product_id));
+          const existing = targetLines.find((line) => line.packaging_id === targetId);
+          if (existing) {
+            await tx.update(productPackaging)
+              .set({ qty: existing.qty + sourceLine.qty })
+              .where(eq(productPackaging.id, existing.id));
+            await tx.delete(productPackaging).where(eq(productPackaging.id, sourceLine.id));
+          } else {
+            await tx.update(productPackaging)
+              .set({ packaging_id: targetId })
+              .where(eq(productPackaging.id, sourceLine.id));
+          }
+        }
+
+        await tx.delete(packaging).where(eq(packaging.id, sourceId));
+      }
+    });
   },
 };

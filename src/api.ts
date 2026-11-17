@@ -97,6 +97,9 @@ export const api = {
   updatePackaging: (id: number, body: PackagingInput) =>
     packagingRepository.update(id, body).then((rows) => rows[0] as PackagingMaterial),
 
+  mergePackaging: (targetId: number, sourceIds: number[]) =>
+    packagingRepository.mergeInto(targetId, sourceIds),
+
   deletePackaging: (id: number) => packagingRepository.delete(id),
 
   products: () => productRepository.getAll() as Promise<Product[]>,
