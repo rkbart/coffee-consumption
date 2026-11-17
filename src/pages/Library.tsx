@@ -310,52 +310,48 @@ export default function Library() {
                                 {material.description}
                               </p>
                             )}
-                            <div className="packaging-card-meta">
-                              <span className="meta-item">
-                                <span className="meta-label">Pack price</span>
-                                <span className="meta-value">
-                                  {material.pack_price > 0
-                                    ? money(material.pack_price)
-                                    : "—"}
-                                </span>
+                            <div className="packaging-detail-row">
+                              <span className="detail-label">Pack price</span>
+                              <span className="detail-value">
+                                {material.pack_price > 0
+                                  ? money(material.pack_price)
+                                  : "—"}
                               </span>
-                              <span className="meta-item">
-                                <span className="meta-label">Qty / drink</span>
-                                <span className="meta-value">
-                                  {fmt(material.qty_needed)}
-                                </span>
+                            </div>
+                            <div className="packaging-detail-row">
+                              <span className="detail-label">Qty per drink</span>
+                              <span className="detail-value">
+                                {fmt(material.qty_needed)}
                               </span>
-                              <span className="meta-item cost-amount">
-                                <span className="meta-label">Cost / drink</span>
-                                <span className="meta-value">
-                                  {totalCost !== null ? money(totalCost) : "—"}
-                                </span>
+                            </div>
+                            <div className="packaging-detail-row">
+                              <span className="detail-label">Cost per drink</span>
+                              <span className="detail-value cost-amount">
+                                {totalCost !== null ? money(totalCost) : "—"}
                               </span>
                             </div>
                             <div className="packaging-card-actions">
                               <button
                                 type="button"
-                                className="icon-btn"
-                                aria-label={`Edit ${material.name}`}
+                                className="btn btn-quiet btn-sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setPackagingModal(material);
                                   setExpandedPackagingId(null);
                                 }}
                               >
-                                <IconEdit size={15} />
+                                <IconEdit size={15} /> Edit
                               </button>
                               <button
                                 type="button"
-                                className="icon-btn danger"
-                                aria-label={`Delete ${material.name}`}
+                                className="btn btn-ghost-danger btn-sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setPendingDelete(material);
                                   setExpandedPackagingId(null);
                                 }}
                               >
-                                <IconTrash size={15} />
+                                <IconTrash size={15} /> Delete
                               </button>
                             </div>
                           </div>

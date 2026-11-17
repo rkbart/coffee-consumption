@@ -261,6 +261,12 @@ export function PackagingModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  // Keep rows in sync with the material being edited so switching materials
+  // inside an open modal always loads the correct data.
+  useEffect(() => {
+    setRows(material ? [rowFromMaterial(material)] : [emptyRow()]);
+  }, [material]);
+
   const addRow = () => setRows((prev) => [...prev, emptyRow()]);
   const removeRow = (id: string) => setRows((prev) => prev.filter((r) => r.id !== id));
 
