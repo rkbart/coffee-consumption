@@ -25,8 +25,9 @@ export interface RecipeItem {
   unit: Unit;
 }
 
-export interface PackagingMaterial {
+export interface PackagingComponent {
   id: number;
+  packaging_id: number;
   name: string;
   description: string;
   unit: Unit;
@@ -35,6 +36,14 @@ export interface PackagingMaterial {
   qty_needed: number;
   waste_pct: number;
   sort_order: number;
+}
+
+export interface PackagingMaterial {
+  id: number;
+  name: string;
+  description: string;
+  sort_order: number;
+  components: PackagingComponent[];
 }
 
 export interface ProductPackaging {

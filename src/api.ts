@@ -4,6 +4,7 @@ import {
 import {
   packagingRepository,
 } from './repositories/packaging-repository';
+import type { PackagingSetInput } from './repositories/packaging-repository';
 import {
   productRepository,
   type ProductInput,
@@ -49,15 +50,7 @@ export interface IngredientInput {
   waste_pct: number;
 }
 
-export interface PackagingInput {
-  name: string;
-  description: string;
-  unit: 'g' | 'ml' | 'pcs';
-  pack_price: number;
-  pack_size: number;
-  qty_needed: number;
-  waste_pct: number;
-}
+export type PackagingInput = PackagingSetInput;
 
 /**
  * Client-side data layer over the OPFS/SQLite database (sqlocal + Drizzle).

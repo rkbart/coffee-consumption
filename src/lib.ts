@@ -1,6 +1,7 @@
 import type {
   CountEntry,
   Ingredient,
+  PackagingComponent,
   PackagingMaterial,
   Product,
   ProductPackaging,
@@ -327,6 +328,12 @@ export interface CostedPackagingLine {
   unitCost: number;
   lineCost: number;
   missingCost: boolean;
+  components: {
+    component: PackagingComponent;
+    unitCost: number;
+    lineCost: number;
+    missingCost: boolean;
+  }[];
 }
 
 export interface RecipeCost {
@@ -386,20 +393,33 @@ export function recipeCost(
 
   const packagingLines: CostedPackagingLine[] = (product.packaging ?? []).map((line) => {
     const material = packagingById.get(line.packaging_id);
-    const netRecovery =
-      (material?.pack_size ?? 0) * (1 - (material?.waste_pct ?? 0) / 100);
-    const missingCost = !material || material.pack_price <= 0 || netRecovery <= 0;
-    if (missingCost && !missingCosts.includes(line.packaging_name)) {
-      missingCosts.push(line.packaging_name);
+    const components = (material?.components ?? []).map((component) => {
+      const netRecovery = component.pack_size * (1 - component.waste_pct / 100);
+      const missingCost = component.pack_price <= 0 || netRecovery <= 0;
+      const unitCost = missingCost ? 0 : component.pack_price / netRecovery;
+      if (missingCost && !missingCosts.includes(component.name)) {
+        missingCosts.push(component.name);
+      }
+      return {
+        component,
+        unitCost,
+        lineCost: round2(unitCost * component.qty_needed),
+        missingCost,
+      };
+    });
+    const missingCost = !material || components.length === 0 || components.some((component) => component.missingCost);
+    if (!material || components.length === 0) {
+      if (!missingCosts.includes(line.packaging_name)) missingCosts.push(line.packaging_name);
     }
-    const unitCost = missingCost ? 0 : material!.pack_price / netRecovery;
+    const unitCost = round2(components.reduce((sum, component) => sum + component.lineCost, 0));
     return {
       line,
       material,
-      netRecovery,
+      netRecovery: 1,
       unitCost,
       lineCost: round2(unitCost * line.qty),
       missingCost,
+      components,
     };
   });
 

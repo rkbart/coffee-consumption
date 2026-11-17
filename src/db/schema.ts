@@ -37,6 +37,23 @@ export const packaging = sqliteTable('packaging', {
   sort_order: integer('sort_order').notNull().default(0),
 });
 
+export const packagingComponents = sqliteTable('packaging_components', {
+  id: integer('id').primaryKey(),
+  packaging_id: integer('packaging_id')
+    .notNull()
+    .references(() => packaging.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  description: text('description').notNull().default(''),
+  unit: text('unit').notNull().default('pcs'),
+  pack_price: real('pack_price').notNull().default(0),
+  pack_size: real('pack_size').notNull().default(1),
+  qty_needed: real('qty_needed').notNull().default(1),
+  waste_pct: real('waste_pct').notNull().default(0),
+  sort_order: integer('sort_order').notNull().default(0),
+}, (t) => ({
+  packagingIdx: index('packaging_components_packaging_idx').on(t.packaging_id),
+}));
+
 export const products = sqliteTable('products', {
   id: integer('id').primaryKey(),
   name: text('name').notNull(),

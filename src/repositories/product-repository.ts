@@ -68,7 +68,7 @@ export const productRepository = {
       const enriched: ProductPackagingRow = {
         ...line,
         packaging_name: material?.name ?? '',
-        unit: (material?.unit ?? 'pcs') as Unit,
+        unit: 'pcs' as Unit,
       };
       if (!packagingByProduct.has(line.product_id))
         packagingByProduct.set(line.product_id, []);

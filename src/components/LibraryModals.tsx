@@ -262,7 +262,7 @@ export function PackagingModal({
     qtyNeeded: "1",
   });
 
-  const rowFromMaterial = (m: PackagingMaterial): Row => ({
+  const rowFromComponent = (m: PackagingMaterial["components"][number]): Row => ({
     id: crypto.randomUUID(),
     name: m.name,
     description: m.description,
@@ -272,14 +272,18 @@ export function PackagingModal({
     qtyNeeded: String(m.qty_needed),
   });
 
+  const [setName, setSetName] = useState("");
+  const [setDescription, setSetDescription] = useState("");
   const [rows, setRows] = useState<Row[]>(() =>
-    material ? [rowFromMaterial(material)] : [emptyRow()],
+    material ? material.components.map(rowFromComponent) : [emptyRow()],
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    setRows(material ? [rowFromMaterial(material)] : [emptyRow()]);
+    setSetName(material?.name ?? "");
+    setSetDescription(material?.description ?? "");
+    setRows(material ? material.components.map(rowFromComponent) : [emptyRow()]);
   }, [material]);
 
   const addRow = () => setRows((prev) => [...prev, emptyRow()]);
@@ -292,19 +296,23 @@ export function PackagingModal({
   const rowStats = (r: Row) => {
     const price = Number(r.packPrice) || 0;
     const size = Number(r.packSize) || 0;
-    const qty = Number(r.qtyNeeded) || 1;
+    const qty = Number(r.qtyNeeded);
     const pricePerUnit = size > 0 ? price / size : 0;
     const total = pricePerUnit * qty;
     return { price, size, qty, pricePerUnit, total };
   };
 
   const grandTotal = rows.reduce((sum, r) => sum + rowStats(r).total, 0);
+  const totalComplete = rows.length > 0 && rows.every((row) => {
+    const { price, size, qty } = rowStats(row);
+    return price > 0 && size > 0 && qty > 0;
+  });
 
   const validateRow = (r: Row): string | null => {
-    if (!r.name.trim()) return "Give this row a name.";
+    if (!r.name.trim()) return "Give each component a name.";
     const { price, size } = rowStats(r);
     if (price > 0 && !(size > 0)) return "Enter how many pieces are in one pack.";
-    const qty = Number(r.qtyNeeded) || 1;
+    const qty = Number(r.qtyNeeded);
     if (!(qty > 0)) return "Quantity needed must be greater than zero.";
     return null;
   };
@@ -312,6 +320,15 @@ export function PackagingModal({
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setError("");
+
+    if (!setName.trim()) {
+      setError("Give this packaging set a name, such as Medium.");
+      return;
+    }
+    if (rows.length === 0) {
+      setError("Add at least one component to this packaging set.");
+      return;
+    }
 
     const errors = rows.map((r) => validateRow(r));
     const firstError = errors.find((e) => e !== null);
@@ -322,45 +339,25 @@ export function PackagingModal({
 
     setSaving(true);
     try {
-      if (material) {
-        const first = rows[0];
-        const body: PackagingInput = {
-          name: first.name.trim(),
-          description: first.description.trim(),
-          unit: first.unit,
-          pack_price: Number(first.packPrice) || 0,
-          pack_size: Number(first.packSize) || 1,
-          qty_needed: Number(first.qtyNeeded) || 1,
+      const body: PackagingInput = {
+        name: setName.trim(),
+        description: setDescription.trim(),
+        components: rows.map((row) => ({
+          name: row.name.trim(),
+          description: row.description.trim(),
+          unit: row.unit,
+          pack_price: Number(row.packPrice) || 0,
+          pack_size: Number(row.packSize) || 1,
+          qty_needed: Number(row.qtyNeeded),
           waste_pct: 0,
-        };
+        })),
+      };
+      if (material) {
         await api.updatePackaging(material.id, body);
-        for (const r of rows.slice(1)) {
-          const extra: PackagingInput = {
-            name: r.name.trim(),
-            description: r.description.trim(),
-            unit: r.unit,
-            pack_price: Number(r.packPrice) || 0,
-            pack_size: Number(r.packSize) || 1,
-            qty_needed: Number(r.qtyNeeded) || 1,
-            waste_pct: 0,
-          };
-          await api.createPackaging(extra);
-        }
-        onSaved(`${body.name} updated`);
+        onSaved(`${body.name} packaging set updated`);
       } else {
-        for (const r of rows) {
-          const body: PackagingInput = {
-            name: r.name.trim(),
-            description: r.description.trim(),
-            unit: r.unit,
-            pack_price: Number(r.packPrice) || 0,
-            pack_size: Number(r.packSize) || 1,
-            qty_needed: Number(r.qtyNeeded) || 1,
-            waste_pct: 0,
-          };
-          await api.createPackaging(body);
-        }
-        onSaved(`${rows.length} packaging${rows.length === 1 ? "" : "s"} added`);
+        await api.createPackaging(body);
+        onSaved(`${body.name} packaging set added`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save packaging");
@@ -382,119 +379,82 @@ export function PackagingModal({
   return (
     <Modal
       open={Boolean(editing)}
-      title={isNew ? "New packaging" : "Edit packaging"}
-      subtitle={isNew
-        ? "Add one or more packaging materials at once. Total = (pack price ÷ pack size) × qty needed per drink."
-        : `Editing ${material?.name}. Changes save to this material and every recipe that uses it.`}
+      title={isNew ? "New packaging set" : "Edit packaging set"}
+      subtitle="Name a set for a drink size, then add each component and the quantity used per drink. Recipes use the combined set cost."
       onClose={onClose}
       wide
     >
       <form onSubmit={submit} className="space-y-3">
         {error && <p className="text-sm text-red">{error}</p>}
-        <div className="border border-line rounded-lg overflow-x-auto overflow-y-hidden">
-          <div className="min-w-[640px] border-b border-line/50">
-            <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="text-left">
-                <th className="pb-2 font-medium text-ink-soft text-[10px] uppercase tracking-wider">Name</th>
-                <th className="pb-2 font-medium text-ink-soft text-[10px] uppercase tracking-wider">Brand / description</th>
-                <th className="pb-2 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Pack price</th>
-                <th className="pb-2 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Pack size</th>
-                <th className="pb-2 font-medium text-ink-soft text-[10px] uppercase tracking-wider">Unit</th>
-                <th className="pb-2 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Price / unit</th>
-                <th className="pb-2 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Qty / drink</th>
-                <th className="pb-2 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Total</th>
-                <th className="pb-2 text-right w-12" />
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => {
-                const { size: rowSize, pricePerUnit: rowPricePerUnit, total: rowTotal } = rowStats(r);
-                const rowError = validateRow(r);
-                return (
-                  <tr key={r.id} className={`border-b border-line/50 ${rowError ? "bg-red-soft/50" : ""}`}>
-                    <td className="pb-2">
-                      <input
-                        value={r.name}
-                        onChange={(e) => updateField(r.id, "name", e.target.value)}
-                        placeholder="16 oz cup"
-                        autoFocus={rows.length === 1 && r.name === "" && isNew}
-                        className="w-full bg-transparent border-none outline-none text-ink focus:ring-0"
-                      />
-                    </td>
-                    <td className="pb-2">
-                      <input
-                        value={r.description}
-                        onChange={(e) => updateField(r.id, "description", e.target.value)}
-                        placeholder="U-cup"
-                        className="w-full bg-transparent border-none outline-none text-ink focus:ring-0"
-                      />
-                    </td>
-                    <td className="pb-2 text-right">
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={r.packPrice}
-                        onChange={(e) => updateField(r.id, "packPrice", e.target.value)}
-                        className="w-full bg-transparent border-none outline-none text-ink text-right focus:ring-0"
-                      />
-                    </td>
-                    <td className="pb-2 text-right">
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
-                        value={r.packSize}
-                        onChange={(e) => updateField(r.id, "packSize", e.target.value)}
-                        className="w-full bg-transparent border-none outline-none text-ink text-right focus:ring-0"
-                      />
-                    </td>
-                    <td className="pb-2">
-                      <select
-                        value={r.unit}
-                        onChange={(e) => updateField(r.id, "unit", e.target.value as Unit)}
-                        className="w-full bg-transparent border-none outline-none text-ink focus:ring-0"
-                      >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="space-y-1">
+            <span className="block text-xs font-semibold uppercase tracking-wider text-ink-soft">Packaging set name</span>
+            <input
+              value={setName}
+              onChange={(event) => setSetName(event.target.value)}
+              placeholder="Medium"
+              autoFocus={isNew}
+              className="w-full min-w-0 rounded-lg border border-line bg-surface px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent"
+            />
+          </label>
+          <label className="space-y-1">
+            <span className="block text-xs font-semibold uppercase tracking-wider text-ink-soft">Description <span className="font-normal normal-case text-muted">(optional)</span></span>
+            <input
+              value={setDescription}
+              onChange={(event) => setSetDescription(event.target.value)}
+              placeholder="For medium size drinks"
+              className="w-full min-w-0 rounded-lg border border-line bg-surface px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent"
+            />
+          </label>
+        </div>
+        <div className="space-y-3">
+          {rows.map((r, index) => {
+            const { size, pricePerUnit, total } = rowStats(r);
+            const rowError = validateRow(r);
+            return (
+              <fieldset key={r.id} className={`min-w-0 rounded-lg border p-3 ${rowError ? "border-red bg-red-soft/30" : "border-line"}`}>
+                <legend className="px-1 text-sm font-semibold text-ink">Component {index + 1}</legend>
+                <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <label className="min-w-0 space-y-1">
+                    <span className="block text-xs font-medium text-ink-soft">Name</span>
+                    <input value={r.name} onChange={(e) => updateField(r.id, "name", e.target.value)} placeholder="16 oz cup" className="w-full min-w-0 rounded-lg border border-line bg-surface px-3 py-2 text-ink" />
+                  </label>
+                  <label className="min-w-0 space-y-1">
+                    <span className="block text-xs font-medium text-ink-soft">Brand / description</span>
+                    <input value={r.description} onChange={(e) => updateField(r.id, "description", e.target.value)} placeholder="Optional" className="w-full min-w-0 rounded-lg border border-line bg-surface px-3 py-2 text-ink" />
+                  </label>
+                  <label className="min-w-0 space-y-1">
+                    <span className="block text-xs font-medium text-ink-soft">Pack price</span>
+                    <input type="number" min="0" step="0.01" value={r.packPrice} onChange={(e) => updateField(r.id, "packPrice", e.target.value)} placeholder="0" className="w-full min-w-0 rounded-lg border border-line bg-surface px-3 py-2 text-ink" />
+                  </label>
+                  <label className="min-w-0 space-y-1">
+                    <span className="block text-xs font-medium text-ink-soft">Pack size</span>
+                    <div className="flex min-w-0 gap-2">
+                      <input type="number" min="0" step="any" value={r.packSize} onChange={(e) => updateField(r.id, "packSize", e.target.value)} placeholder="1" className="w-full min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 py-2 text-ink" />
+                      <select value={r.unit} onChange={(e) => updateField(r.id, "unit", e.target.value as Unit)} className="w-20 shrink-0 rounded-lg border border-line bg-surface px-2 py-2 text-ink">
                         <option value="pcs">pcs</option>
                         <option value="g">g</option>
                         <option value="ml">ml</option>
                       </select>
-                    </td>
-                    <td className="pb-2 text-right">
-                      {rowSize > 0 ? money(rowPricePerUnit) : "—"}
-                    </td>
-                    <td className="pb-2 text-right">
-                      <input
-                        type="number"
-                        min="0.01"
-                        step="any"
-                        value={r.qtyNeeded}
-                        onChange={(e) => updateField(r.id, "qtyNeeded", e.target.value)}
-                        className="w-full bg-transparent border-none outline-none text-ink text-right focus:ring-0"
-                      />
-                    </td>
-                    <td className="pb-2 text-right font-medium text-accent-dark">
-                      {money(rowTotal)}
-                    </td>
-                    <td className="pb-2 text-right">
-                      <button
-                        type="button"
-                        className="p-1 hover:bg-red-soft rounded-sm text-muted hover:text-red focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-1"
-                        onClick={() => removeRow(r.id)}
-                      >
-                        Remove
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          </div>
+                    </div>
+                  </label>
+                  <label className="min-w-0 space-y-1">
+                    <span className="block text-xs font-medium text-ink-soft">Quantity per drink</span>
+                    <input type="number" min="0.01" step="any" value={r.qtyNeeded} onChange={(e) => updateField(r.id, "qtyNeeded", e.target.value)} className="w-full min-w-0 rounded-lg border border-line bg-surface px-3 py-2 text-ink" />
+                  </label>
+                  <div className="flex flex-wrap items-end justify-between gap-2 sm:col-span-2 lg:col-span-3">
+                    <p className="text-xs text-muted">
+                      {size > 0 ? `${unitMoney(pricePerUnit)} per ${unitLabel(r.unit)} · ${money(total)} per drink` : "Enter the pack size and price to calculate this component."}
+                    </p>
+                    <button type="button" className="rounded-lg px-3 py-2 text-sm font-medium text-red hover:bg-red-soft" onClick={() => removeRow(r.id)}>Remove component</button>
+                  </div>
+                </div>
+              </fieldset>
+            );
+          })}
           <div className="px-4 py-2 border-t border-line flex items-center justify-between">
-            <span className="text-sm font-medium text-ink-soft">Grand total</span>
-            <span className="text-sm font-bold text-accent-dark">{money(grandTotal)}</span>
+            <span className="text-sm font-medium text-ink-soft">Total cost per drink</span>
+            <span className="text-sm font-bold text-accent-dark">{totalComplete ? money(grandTotal) : "Add all component costs"}</span>
           </div>
         </div>
 
@@ -504,7 +464,7 @@ export function PackagingModal({
             className="bg-surface border border-line rounded-lg px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
             onClick={addRow}
           >
-            + Add another entry
+            + Add component
           </button>
           <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
             {material && (
@@ -528,7 +488,7 @@ export function PackagingModal({
               className="bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
               disabled={saving}
             >
-              {saving ? "Saving…" : material ? "Save changes" : "Save all"}
+              {saving ? "Saving…" : "Save set"}
             </button>
           </div>
         </div>

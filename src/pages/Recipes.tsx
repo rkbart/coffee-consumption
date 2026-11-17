@@ -93,10 +93,13 @@ export default function Recipes() {
             product.category,
             product.size_label,
             ...product.recipe.map((line) => line.ingredient_name),
-            ...product.packaging.map((line) => line.packaging_name),
+            ...product.packaging.flatMap((line) => {
+              const set = packaging.find((item) => item.id === line.packaging_id);
+              return [line.packaging_name, ...(set?.components.map((component) => component.name) ?? [])];
+            }),
           ]),
       ),
-    [products, query, menuGroup],
+    [products, packaging, query, menuGroup],
   );
 
   useEffect(() => {
@@ -136,7 +139,7 @@ export default function Recipes() {
       <PageHeader
         eyebrow="The menu"
         title="Recipes"
-        description="Cost each drink from the ingredients and bases in the costing library plus its packaging. Change a purchase price once and every card updates."
+        description="Cost each drink from the ingredients and bases in the costing library, then add the complete packaging set for its size."
         actions={
           <button
             className="bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
@@ -405,17 +408,17 @@ function RecipeCard({
         </div>
         {cost.packagingLines.length === 0 ? (
           <p className="text-xs text-muted">
-            No packaging selected. Edit this drink to add a cup, lid, straw or bag.
+            No packaging set selected. Edit this drink to add its size's complete set.
           </p>
         ) : (
           <div className="overflow-x-auto">
           <table className="w-full min-w-[380px] border-collapse text-sm">
             <thead>
               <tr className="text-left">
-                <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider">Material</th>
-                <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Qty</th>
-                <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Unit</th>
-                <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Cost</th>
+                <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider">Packaging set</th>
+                <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider">Included components</th>
+                <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Sets / drink</th>
+                <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -423,20 +426,12 @@ function RecipeCard({
                 <tr key={line.line.id} className="border-b border-line/50">
                   <td className="pb-1">
                     <span className="font-medium text-ink block">{line.line.packaging_name}</span>
-                    <span className="text-xs text-muted block">
-                      {line.material
-                        ? `${money(line.material.pack_price)} / ${fmt(line.material.pack_size)} ${unitLabel(line.material.unit)}${
-                            line.material.description ? ` · ${line.material.description}` : ""
-                          }${line.material.waste_pct ? ` · ${pct(line.material.waste_pct)}% waste` : ""}`
-                        : "No purchase price"}
-                    </span>
+                    {line.material?.description && <span className="text-xs text-muted">{line.material.description}</span>}
                   </td>
-                  <td className="pb-1 text-right">
-                    {fmt(line.line.qty, line.line.qty % 1 ? 1 : 0)} <span className="text-xs text-muted"> {unitLabel(line.line.unit)}</span>
+                  <td className="pb-1 text-xs text-muted">
+                    {line.components.map((component) => component.component.name).join(" · ") || "No components"}
                   </td>
-                  <td className="pb-1 text-right">
-                    {line.missingCost ? "—" : unitMoney(line.unitCost)}
-                  </td>
+                  <td className="pb-1 text-right">{fmt(line.line.qty, line.line.qty % 1 ? 1 : 0)}</td>
                   <td className="pb-1 text-right font-medium text-accent-dark">
                     {line.missingCost ? "—" : money(line.lineCost)}
                   </td>
@@ -622,7 +617,7 @@ function BeverageModal({
         product_id: product?.id ?? 0,
         packaging_id: Number(line.packaging_id),
         packaging_name: material?.name ?? "Packaging",
-        unit: (material?.unit ?? "pcs") as Unit,
+        unit: "pcs" as Unit,
         qty: Number(line.qty) || 0,
       };
     });
@@ -665,7 +660,7 @@ function BeverageModal({
       return;
     }
     if (new Set(packagingLines.map((l) => l.packaging_id)).size !== packagingLines.length) {
-      setError("Each packaging material can only appear once.");
+      setError("Each packaging set can only appear once.");
       return;
     }
     if (!(Number(yieldQty) > 0)) {
@@ -831,8 +826,8 @@ function BeverageModal({
 
         <div className="border border-line rounded-lg p-3 space-y-3">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Packaging materials</span>
-            <span className="text-xs text-muted">Costed per piece</span>
+            <span className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Packaging sets</span>
+            <span className="text-xs text-muted">Combined component cost per set</span>
           </div>
           {packLines.map((line, index) => {
             const material = packagingMaterials.find(
@@ -852,10 +847,10 @@ function BeverageModal({
                   }
                   className="min-w-[9rem] flex-1 bg-surface border border-line rounded-lg px-3 py-2 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
                 >
-                  <option value="">Choose packaging…</option>
+                  <option value="">Choose a packaging set…</option>
                   {packagingMaterials.map((row) => (
                     <option key={row.id} value={row.id}>
-                      {row.name}
+                      {row.name} · {row.components.length} component{row.components.length === 1 ? "" : "s"}
                     </option>
                   ))}
                 </select>
@@ -869,9 +864,7 @@ function BeverageModal({
                     placeholder="0"
                     className="w-16 bg-surface border border-line rounded-lg px-2 py-2 text-ink text-right focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
                   />
-                  <span className="text-xs text-muted">
-                    {material ? unitLabel(material.unit) : "—"}
-                  </span>
+                  <span className="text-xs text-muted">set</span>
                 </div>
                 <span className="text-xs font-medium text-accent-dark whitespace-nowrap">
                   {costed && !costed.missingCost ? money(costed.lineCost) : "—"}
@@ -891,7 +884,7 @@ function BeverageModal({
           })}
           {packagingMaterials.length === 0 ? (
             <p className="text-xs text-muted">
-              No packaging materials yet. Add cups, lids or bags in the{" "}
+              No packaging sets yet. Add a size set in the{" "}
               <Link className="text-accent hover:text-accent-dark underline decoration-accent/30" to="/library">
                 costing library
               </Link>

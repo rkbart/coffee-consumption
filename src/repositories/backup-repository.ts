@@ -3,6 +3,7 @@ import {
   settings as settingsTable,
   ingredients as ingredientsTable,
   packaging as packagingTable,
+  packagingComponents as packagingComponentsTable,
   products as productsTable,
   recipeItems as recipeItemsTable,
   productPackaging as productPackagingTable,
@@ -13,18 +14,20 @@ import {
 import { eq } from 'drizzle-orm';
 import { resetBusinessData } from '../db/seed/reset';
 
-const BACKUP_VERSION = '1';
+const BACKUP_VERSION = '2';
 
 const COLUMNS = [
   'record_type',
   'key',
   'value',
   'name',
+  'description',
   'category',
   'unit',
   'pack_price',
   'pack_size',
   'qty_needed',
+  'qty',
   'waste_pct',
   'sort_order',
   'product_name',
@@ -67,6 +70,44 @@ const csvRow = (recordType: string, values: Record<string, unknown> = {}) =>
     csvCell(column === 'record_type' ? recordType : values[column] ?? ''),
   ).join(',');
 
+function parseCsvRows(csv: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = '';
+  let quoted = false;
+  for (let i = 0; i < csv.length; i++) {
+    const char = csv[i];
+    if (quoted) {
+      if (char === '"' && csv[i + 1] === '"') {
+        cell += '"';
+        i++;
+      } else if (char === '"') {
+        quoted = false;
+      } else {
+        cell += char;
+      }
+    } else if (char === '"') {
+      quoted = true;
+    } else if (char === ',') {
+      row.push(cell);
+      cell = '';
+    } else if (char === '\n' || char === '\r') {
+      if (char === '\r' && csv[i + 1] === '\n') i++;
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = '';
+    } else {
+      cell += char;
+    }
+  }
+  if (cell.length > 0 || row.length > 0) {
+    row.push(cell);
+    rows.push(row);
+  }
+  return rows;
+}
+
 export async function exportBackupCsv(): Promise<string> {
   const lines = [COLUMNS.join(',')];
   lines.push(csvRow('meta', { key: 'schema_version', value: BACKUP_VERSION }));
@@ -81,7 +122,20 @@ export async function exportBackupCsv(): Promise<string> {
   }
 
   for (const row of await db.select().from(packagingTable).orderBy(packagingTable.sort_order, packagingTable.name, packagingTable.id)) {
-    lines.push(csvRow('packaging', { name: row.name, description: row.description, unit: row.unit, pack_price: row.pack_price, pack_size: row.pack_size, qty_needed: row.qty_needed, waste_pct: row.waste_pct, sort_order: row.sort_order }));
+    lines.push(csvRow('packaging', { name: row.name, description: row.description, sort_order: row.sort_order, value: 'set-v2' }));
+    for (const component of await db.select().from(packagingComponentsTable).where(eq(packagingComponentsTable.packaging_id, row.id)).orderBy(packagingComponentsTable.sort_order, packagingComponentsTable.id)) {
+      lines.push(csvRow('packaging_component', {
+        packaging_name: row.name,
+        name: component.name,
+        description: component.description,
+        unit: component.unit,
+        pack_price: component.pack_price,
+        pack_size: component.pack_size,
+        qty_needed: component.qty_needed,
+        waste_pct: component.waste_pct,
+        sort_order: component.sort_order,
+      }));
+    }
   }
 
   const products = await db.select().from(productsTable).orderBy(productsTable.category, productsTable.name, productsTable.size_label, productsTable.id);
@@ -126,15 +180,15 @@ const productKey = (name: string, size: string) => `${text(name)}\u0000${text(si
 const closingKey = (date: string, shift: string) => `${text(date)}\u0000${text(shift)}`;
 
 export async function importBackupCsv(csv: string): Promise<{ ok: boolean; counts: { ingredients: number; packaging: number; products: number; closings: number } }> {
-  const rawLines = csv.split(/\r?\n/).filter((line) => line.length > 0);
-  if (rawLines.length === 0) throw new Error('Empty backup file.');
+  const rows = parseCsvRows(csv).filter((row) => row.some((cell) => cell.length > 0));
+  if (rows.length === 0) throw new Error('Empty backup file.');
 
-  const header = rawLines[0].split(',').map((c) => c.trim());
+  const header = rows[0].map((c) => c.trim());
   const colIndex = (name: string) => header.indexOf(name);
 
   const records: { type: string; values: Record<string, string> }[] = [];
-  for (let i = 1; i < rawLines.length; i++) {
-    const cells = rawLines[i].split(',');
+  for (let i = 1; i < rows.length; i++) {
+    const cells = rows[i];
     const values: Record<string, string> = {};
     for (const column of COLUMNS) {
       values[column] = cells[colIndex(column)] ?? '';
@@ -145,6 +199,7 @@ export async function importBackupCsv(csv: string): Promise<{ ok: boolean; count
   const settingsRows = records.filter((r) => r.type === 'setting');
   const ingredientRows = records.filter((r) => r.type === 'ingredient');
   const packagingRows = records.filter((r) => r.type === 'packaging');
+  const packagingComponentRows = records.filter((r) => r.type === 'packaging_component');
   const productRows = records.filter((r) => r.type === 'product');
   const recipeItemRows = records.filter((r) => r.type === 'recipe_item');
   const productPackagingRows = records.filter((r) => r.type === 'product_packaging');
@@ -177,14 +232,43 @@ export async function importBackupCsv(csv: string): Promise<{ ok: boolean; count
     const [row] = await db.insert(packagingTable).values({
       name: values.name,
       description: values.description || '',
+      unit: 'pcs',
+      pack_price: 0,
+      pack_size: 1,
+      qty_needed: 1,
+      waste_pct: 0,
+      sort_order: number(values.sort_order),
+    }).returning();
+    packagingIdByKey.set(values.name, row.id);
+    if (values.value !== 'set-v2') {
+      await db.insert(packagingComponentsTable).values({
+        packaging_id: row.id,
+        name: values.name,
+        description: values.description || '',
+        unit: values.unit || 'pcs',
+        pack_price: number(values.pack_price),
+        pack_size: number(values.pack_size) || 1,
+        qty_needed: number(values.qty_needed) || 1,
+        waste_pct: number(values.waste_pct),
+        sort_order: 0,
+      });
+    }
+  }
+
+  for (const { values } of packagingComponentRows) {
+    const packagingId = packagingIdByKey.get(values.packaging_name);
+    if (!packagingId) continue;
+    await db.insert(packagingComponentsTable).values({
+      packaging_id: packagingId,
+      name: values.name,
+      description: values.description || '',
       unit: values.unit || 'pcs',
       pack_price: number(values.pack_price),
       pack_size: number(values.pack_size) || 1,
       qty_needed: number(values.qty_needed) || 1,
       waste_pct: number(values.waste_pct),
       sort_order: number(values.sort_order),
-    }).returning();
-    packagingIdByKey.set(values.name, row.id);
+    });
   }
 
   const productIdByKey = new Map<string, number>();

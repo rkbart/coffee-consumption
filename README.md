@@ -60,9 +60,10 @@ or gram. Recipes select the base directly, so there is no nested preparation
 layer to maintain. For example, a 3,000 ml base costing ₱36 is ₱0.012 per ml,
 and a drink using 200 ml adds ₱2.40 to its food cost.
 
-Packaging is a separate catalog of materials (cups, lids, straws, bags) with a
-pack price and pack size. Each drink selects the materials it uses and how many;
-the packaging block and subtotal sit separately on the costing card.
+Packaging is organized into drink-size sets, such as **Medium**. Each set groups
+its components (cup, lid, straw, bag) and quantities used per drink. The library
+adds the component costs into one set total; each recipe selects the set and adds
+that total to the drink's cost.
 
 ## Running it
 
@@ -107,12 +108,12 @@ history. Export first if the data may be needed again.
 
 - **Overview** — latest shift closing, usage totals, variance table, recent closings.
 - **Recipes** — a cost sheet per beverage: ingredients and bases plus a separate
-  packaging block, each with its own cost and subtotal, then the suggested selling
+  packaging-set block and subtotal, then the suggested selling
   price with VAT and the food cost actually achieved at your menu price. Search,
   menu-group filtering and pagination keep a growing menu manageable.
-- **Costing library** — every ingredient, made-in-house base and packaging material
-  in one searchable, paginated page. Purchase data is shared, so one price change
-  re-costs every drink that uses it.
+- **Costing library** — ingredients, made-in-house bases and packaging sets with
+  their components in one searchable, paginated page. Updating a component price
+  re-costs every drink that uses its set.
 - **Daily count** — the closing workflow with AM, MID, PM and GY shift tabs, a
   prepared-by name, opening (carried from the previous shift), deliveries, waste,
   closing, units sold with debounced search, menu-group filtering and pagination,
@@ -140,8 +141,8 @@ history. Export first if the data may be needed again.
 | POST | `/api/reset` | Delete all business data, keeping shop settings |
 | GET/POST | `/api/ingredients` | List / create ingredients, including made-in-house bases |
 | PUT/DELETE | `/api/ingredients/:id` | Edit / delete (blocked if used in a recipe) |
-| GET/POST | `/api/packaging` | List / create packaging materials |
-| PUT/DELETE | `/api/packaging/:id` | Edit / delete (blocked if used by a beverage) |
+| GET/POST | `/api/packaging` | List / create packaging sets and their components |
+| PUT/DELETE | `/api/packaging/:id` | Edit / delete a set (blocked if used by a beverage) |
 | GET/POST | `/api/products` | List / create beverages with recipes |
 | PUT/DELETE | `/api/products/:id` | Edit / delete a beverage |
 | GET | `/api/day?date=YYYY-MM-DD&shift=am\|mid\|pm\|gy` | Count sheet state for one shift; carries forward the previous shift's closing |

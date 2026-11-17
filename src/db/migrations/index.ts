@@ -141,4 +141,36 @@ CREATE TABLE IF NOT EXISTS closing_sales (
 CREATE INDEX IF NOT EXISTS idx_closing_sales_closing ON closing_sales(closing_id);
 `,
   },
+  {
+    id: '0001_packaging_sets',
+    sql: `
+CREATE TABLE IF NOT EXISTS packaging_components (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  packaging_id INTEGER NOT NULL REFERENCES packaging(id) ON DELETE CASCADE,
+  name         TEXT NOT NULL,
+  description  TEXT NOT NULL DEFAULT '',
+  unit         TEXT NOT NULL DEFAULT 'pcs',
+  pack_price   REAL NOT NULL DEFAULT 0,
+  pack_size    REAL NOT NULL DEFAULT 1,
+  qty_needed   REAL NOT NULL DEFAULT 1,
+  waste_pct    REAL NOT NULL DEFAULT 0,
+  sort_order   INTEGER NOT NULL DEFAULT 0
+);
+
+--> statement-breakpoint
+
+CREATE INDEX IF NOT EXISTS idx_packaging_components_packaging
+  ON packaging_components(packaging_id);
+
+--> statement-breakpoint
+
+INSERT INTO packaging_components (
+  packaging_id, name, description, unit, pack_price, pack_size, qty_needed,
+  waste_pct, sort_order
+)
+SELECT id, name, description, unit, pack_price, pack_size, qty_needed,
+       waste_pct, sort_order
+FROM packaging;
+`,
+  },
 ];

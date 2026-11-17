@@ -18,14 +18,15 @@ const PER_PAGE = 12;
 const matchesQuery = (query: string, values: (string | number | null | undefined)[]) =>
   !query || values.some((value) => String(value ?? "").toLowerCase().includes(query));
 
-const packagingUnitCost = (material: PackagingMaterial) => {
-  const net = material.pack_size * (1 - (material.waste_pct || 0) / 100);
-  return material.pack_price > 0 && net > 0 ? material.pack_price / net : null;
-};
-
 const packagingTotalCost = (material: PackagingMaterial) => {
-  const unitCost = packagingUnitCost(material);
-  return unitCost !== null ? unitCost * material.qty_needed : null;
+  if (material.components.length === 0) return null;
+  let total = 0;
+  for (const component of material.components) {
+    const net = component.pack_size * (1 - (component.waste_pct || 0) / 100);
+    if (component.pack_price <= 0 || net <= 0) return null;
+    total += (component.pack_price / net) * component.qty_needed;
+  }
+  return total;
 };
 
 export default function Library() {
@@ -88,7 +89,7 @@ export default function Library() {
         matchesQuery(query, [
           material.name,
           material.description,
-          material.unit,
+          ...material.components.flatMap((component) => [component.name, component.description]),
         ]),
       ),
     [packaging, query],
@@ -121,7 +122,7 @@ export default function Library() {
       <PageHeader
         eyebrow="The costing library"
         title="Ingredients & packaging"
-        description="Every purchased ingredient and packaging material in one place. Packaging shows cost per piece and the total per drink based on quantity needed."
+        description="Manage ingredient costs and complete packaging sets. Each set groups all items used for a drink size and shows their combined cost per drink."
         actions={
           <button
             className="bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
@@ -132,7 +133,7 @@ export default function Library() {
             }
           >
             <IconPlus size={17} className="mr-1.5" /> Add{" "}
-            {tab === "ingredients" ? "ingredient" : "packaging"}
+            {tab === "ingredients" ? "ingredient" : "packaging set"}
           </button>
         }
       />
@@ -147,13 +148,13 @@ export default function Library() {
         <SearchField
           value={search}
           onChange={setSearch}
-          placeholder="Search ingredients, groups, packaging…"
+          placeholder="Search ingredients, sets or components…"
           label="Search the costing library"
         />
         <p className="min-w-0 text-sm leading-relaxed text-muted sm:flex-1">
           {query
             ? `${totalMatches} result${totalMatches === 1 ? "" : "s"} for “${debouncedSearch.trim()}”`
-            : `${ingredients.length} ingredients · ${packaging.length} packaging`}
+            : `${ingredients.length} ingredients · ${packaging.length} packaging sets`}
         </p>
       </div>
 
@@ -208,7 +209,7 @@ export default function Library() {
         <p className="text-sm text-muted mb-4">
           {tab === "ingredients"
             ? "Pack price is spread across the pack size, net of waste. For a base you make yourself, use the batch cost and batch yield."
-            : "Cups, lids, straws and bags are costed per piece. Price per piece × quantity needed = packaging cost per drink."}
+            : "Create a packaging set for a drink size, then add the cup, lid, straw, bag and other components. The set total is added to each recipe that uses it."}
         </p>
 
         {loading ? (
@@ -277,12 +278,12 @@ export default function Library() {
           <>
             {filteredPackaging.length === 0 ? (
               <div className="text-center py-6">
-                <p className="text-muted">{query ? "No packaging materials match this search." : "No packaging materials yet."}</p>
+                <p className="text-muted">{query ? "No packaging sets or components match this search." : "No packaging sets yet."}</p>
                 <button
                   className="bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                   onClick={() => (query ? setSearch("") : setPackagingModal("new"))}
                 >
-                  {query ? "Clear search" : "Add the first material"}
+                  {query ? "Clear search" : "Add the first packaging set"}
                 </button>
               </div>
             ) : (
@@ -294,30 +295,22 @@ export default function Library() {
                     return (
                       <article
                         key={material.id}
-                        className={`border border-line rounded-lg bg-surface p-4 cursor-pointer transition-all hover:border-line-strong hover:bg-surface-2 ${isExpanded ? "border-accent bg-accent-soft" : ""}`}
-                        onClick={() => {
-                          if (isExpanded) setExpandedPackagingId(null);
-                          else setExpandedPackagingId(material.id);
-                        }}
+                        className={`rounded-lg border border-line bg-surface p-4 transition-colors hover:border-line-strong ${isExpanded ? "border-accent bg-accent-soft" : ""}`}
                       >
                         <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
                           <button
                             type="button"
-                            className="flex items-center gap-2 text-left font-medium text-ink hover:underline hover:text-accent-dark"
+                            className="flex min-w-0 flex-wrap items-center gap-2 text-left font-medium text-ink hover:underline hover:text-accent-dark"
                             aria-expanded={isExpanded}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (isExpanded) setExpandedPackagingId(null);
-                              else setExpandedPackagingId(material.id);
-                            }}
+                            onClick={() => setExpandedPackagingId(isExpanded ? null : material.id)}
                           >
                             <span className="font-medium">{material.name}</span>
-                            <span className="px-1.5 py-0.5 border border-line rounded-full text-xs font-medium text-ink-soft bg-surface-2">
-                              {unitLabel(material.unit)}
+                            <span className="rounded-full border border-line bg-surface-2 px-1.5 py-0.5 text-xs font-medium text-ink-soft">
+                              {material.components.length} component{material.components.length === 1 ? "" : "s"}
                             </span>
                           </button>
-                          <span className="text-sm font-medium text-accent-dark whitespace-nowrap">
-                            {totalCost !== null ? money(totalCost) : "—"}
+                          <span className="text-sm font-semibold text-accent-dark">
+                            {totalCost !== null ? `${money(totalCost)} / drink` : "Add component costs"}
                           </span>
                         </div>
                         {isExpanded && (
@@ -325,30 +318,36 @@ export default function Library() {
                             {material.description && (
                               <p className="text-sm text-muted">{material.description}</p>
                             )}
-                            <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-3">
-                              <div className="flex flex-col gap-0.5">
-                                <span className="text-muted uppercase tracking-wider text-[10px]">Pack price</span>
-                                <span className="text-ink font-medium">
-                                  {material.pack_price > 0 ? money(material.pack_price) : "—"}
-                                </span>
-                              </div>
-                              <div className="flex flex-col gap-0.5">
-                                <span className="text-muted uppercase tracking-wider text-[10px]">Qty per drink</span>
-                                <span className="text-ink font-medium">{fmt(material.qty_needed)}</span>
-                              </div>
-                              <div className="flex flex-col gap-0.5">
-                                <span className="text-muted uppercase tracking-wider text-[10px]">Cost per drink</span>
-                                <span className="text-accent-dark font-medium">
-                                  {totalCost !== null ? money(totalCost) : "—"}
-                                </span>
-                              </div>
+                            <ul className="divide-y divide-line">
+                              {material.components.map((component) => {
+                                const net = component.pack_size * (1 - component.waste_pct / 100);
+                                const unitCost = component.pack_price > 0 && net > 0
+                                  ? component.pack_price / net
+                                  : null;
+                                const componentTotal = unitCost === null
+                                  ? null
+                                  : unitCost * component.qty_needed;
+                                return (
+                                  <li key={component.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+                                    <span className="min-w-0">
+                                      <strong className="text-ink">{component.name}</strong>
+                                      {component.description && <span className="ml-2 text-xs text-muted">{component.description}</span>}
+                                      <span className="ml-2 text-xs text-muted">{fmt(component.qty_needed)} {unitLabel(component.unit)} / drink</span>
+                                    </span>
+                                    <span className="font-medium text-ink-soft">{componentTotal === null ? "Missing cost" : money(componentTotal)}</span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-2">
+                              <span className="text-sm font-medium text-ink-soft">Set total per drink</span>
+                              <strong className="text-accent-dark">{totalCost === null ? "Incomplete" : money(totalCost)}</strong>
                             </div>
-                            <div className="flex gap-2 mt-3">
+                            <div className="mt-3 flex flex-wrap gap-2">
                               <button
                                 type="button"
                                 className="flex-1 bg-surface border border-line rounded-lg px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
-                                onClick={(e) => {
-                                  e.stopPropagation();
+                                onClick={() => {
                                   setPackagingModal(material);
                                   setExpandedPackagingId(null);
                                 }}
@@ -358,8 +357,7 @@ export default function Library() {
                               <button
                                 type="button"
                                 className="text-red hover:bg-red-soft px-3 py-1.5 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-1"
-                                onClick={(e) => {
-                                  e.stopPropagation();
+                                onClick={() => {
                                   setPendingDelete(material);
                                   setExpandedPackagingId(null);
                                 }}
@@ -373,24 +371,13 @@ export default function Library() {
                     );
                   })}
                 </div>
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
-                  <span className="text-sm font-medium text-ink-soft">Total packaging cost per drink:</span>
-                  <span className="text-sm font-bold text-accent-dark">
-                    {money(
-                      pagedPackaging.reduce(
-                        (sum, m) => sum + (packagingTotalCost(m) ?? 0),
-                        0,
-                      ),
-                    )}
-                  </span>
-                </div>
                 <Pagination
                   page={safePage}
                   pageCount={pageCount}
                   total={activeTotal}
                   pageSize={PER_PAGE}
                   onPageChange={setPage}
-                  label="materials"
+                  label="sets"
                 />
               </>
             )}
@@ -425,13 +412,13 @@ export default function Library() {
 
         <Modal
           open={Boolean(pendingDelete)}
-          title="Remove packaging?"
+          title="Remove packaging set?"
           subtitle="Past recipes keep their snapshot, so cost history is not affected."
           onClose={() => setPendingDelete(null)}
         >
           <p className="text-sm leading-relaxed">
             <strong className="text-ink">{pendingDelete?.name}</strong> will be removed from your
-            packaging list and from any recipes that use it.
+            packaging sets and from any recipes that use it.
           </p>
           <div className="mt-4 flex justify-end gap-2">
             <button className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1" onClick={() => setPendingDelete(null)}>
@@ -454,7 +441,7 @@ export default function Library() {
                 }
               }}
             >
-              Remove packaging
+              Remove set
             </button>
           </div>
         </Modal>
