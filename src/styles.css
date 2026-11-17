@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 @layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
   :root {
     --color-ink: #221a15;
     --color-ink-soft: #463a30;
@@ -68,4 +74,31 @@
   button {
     cursor: pointer;
   }
+}
+
+@media print {
+  html,
+  body,
+  #root {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .app-shell,
+  .app-main {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+}
+
+body.modal-open .app-main {
+  overflow: hidden;
+}
+
+.modal-body form input:not([type="checkbox"]):not([type="radio"]),
+.modal-body form select,
+.modal-body form textarea {
+  max-width: 100%;
+  min-width: 0;
 }

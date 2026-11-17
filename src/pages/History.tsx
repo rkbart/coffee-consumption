@@ -206,13 +206,13 @@ export default function History() {
             ) : (
               <>
                 <div className="bg-surface border border-line rounded-lg overflow-hidden">
-                  <div className="flex items-start justify-between mb-3 px-4 pt-4 pb-2 border-b border-line">
-                    <div>
+                  <div className="flex flex-col gap-3 border-b border-line px-4 pb-3 pt-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
                       <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Reconciliation</p>
                       <h2 className="text-lg font-serif font-medium text-ink">
                         {formatDate(detail.date, "long")}
                       </h2>
-                      <div className="mt-1 flex gap-4 text-sm text-muted">
+                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
                         <span className={`inline-block px-2 py-0.5 rounded-full bg-surface-2 text-xs text-ink`}>
                           {shiftLabel(detail.shift)}
                         </span>
@@ -221,7 +221,7 @@ export default function History() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       {flagged > 0 ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-soft text-red text-xs font-medium">
                           <span className="w-1.5 h-1.5 rounded-full bg-current" />
@@ -250,8 +250,8 @@ export default function History() {
                     </p>
                   )}
 
-                  <div className="overflow-x-auto px-4 pb-4">
-                    <table className="w-full border-collapse text-sm">
+                  <div className="overflow-x-auto px-3 pb-4 sm:px-4">
+                    <table className="w-full min-w-[650px] border-collapse text-sm">
                       <thead>
                         <tr className="text-left border-b border-line">
                           <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider">Ingredient</th>

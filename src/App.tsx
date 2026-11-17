@@ -66,15 +66,15 @@ export default function App({ dbReady }: { dbReady: Promise<void> }) {
   }, [dbReady]);
 
   return (
-    <div className="flex h-screen bg-bg text-ink" data-currency={currency}>
-      <aside className="w-64 bg-surface border-r border-line flex flex-col">
-        <div className="p-5 brand">
-          <span className="brand-mark">
+    <div className="app-shell flex h-screen h-[100dvh] overflow-hidden bg-bg text-ink" data-currency={currency}>
+      <aside className="hidden md:flex w-64 shrink-0 bg-surface border-r border-line flex-col print:hidden">
+        <div className="flex items-center gap-2 p-5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-dark">
             <IconCoffee size={21} />
           </span>
-          <span className="brand-text block ml-2">
-            <strong className="text-lg font-serif text-ink">Brew Ledger</strong>
-            <small className="text-muted">Inventory variance</small>
+          <span className="block min-w-0">
+            <strong className="block text-lg font-serif leading-tight text-ink">Brew Ledger</strong>
+            <small className="block text-muted">Inventory variance</small>
           </span>
         </div>
 
@@ -112,13 +112,46 @@ export default function App({ dbReady }: { dbReady: Promise<void> }) {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto bg-bg">
-        {dbError ? (
-          <div className="p-6 bg-red-soft border border-red rounded-lg">
-            <p className="text-red">Something went wrong setting up the app: {dbError}</p>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="shrink-0 border-b border-line bg-surface md:hidden print:hidden">
+          <div className="flex items-center gap-2 px-4 py-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-dark">
+              <IconCoffee size={20} />
+            </span>
+            <span className="block min-w-0">
+              <strong className="block text-lg font-serif leading-tight text-ink">Brew Ledger</strong>
+              <small className="block text-muted">Inventory variance</small>
+            </span>
           </div>
-        ) : (
-          <Routes>
+          <nav className="flex gap-1 overflow-x-auto px-3 pb-2" aria-label="Main navigation">
+            {links.map(({ to, label, icon: Icon, end }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={end}
+                className={({ isActive }) =>
+                  `flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-accent-soft text-accent-dark"
+                      : "text-ink-soft hover:bg-surface-2 hover:text-ink"
+                  }`
+                }
+              >
+                <Icon size={17} className="shrink-0" />
+                <span>{label}</span>
+              </NavLink>
+            ))}
+          </nav>
+        </header>
+
+        <main id="app-main" className="app-main min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-bg">
+          <div className="min-h-full p-4 sm:p-6 lg:p-8 print:p-0">
+            {dbError ? (
+              <div className="rounded-lg border border-red bg-red-soft p-4 sm:p-6">
+                <p className="text-red">Something went wrong setting up the app: {dbError}</p>
+              </div>
+            ) : (
+              <Routes>
             <Route
               path="/"
               element={
@@ -192,9 +225,11 @@ export default function App({ dbReady }: { dbReady: Promise<void> }) {
                 </div>
               }
             />
-          </Routes>
-        )}
-      </main>
+              </Routes>
+            )}
+          </div>
+        </main>
+      </div>
       <BackToTop />
     </div>
   );

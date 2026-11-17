@@ -14,7 +14,7 @@ export default function SearchField({
   label = "Search",
 }: SearchFieldProps) {
   return (
-    <div className="flex items-center gap-2 bg-surface border border-line rounded-lg px-3 py-2 w-full max-w-md" role="search">
+    <div className="flex min-w-0 w-full max-w-md items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2" role="search">
       <IconSearch size={16} className="text-muted" />
       <input
         type="text"
@@ -26,7 +26,7 @@ export default function SearchField({
         onKeyDown={(event) => {
           if (event.key === "Escape") onChange("");
         }}
-        className="flex-1 bg-transparent border-none outline-none text-ink placeholder-muted"
+        className="min-w-0 flex-1 bg-transparent border-none outline-none text-ink placeholder-muted"
       />
       {value && (
         <button

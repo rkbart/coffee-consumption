@@ -207,13 +207,13 @@ export default function Report() {
         />
       </div>
 
-      <section className="bg-surface border border-line rounded-lg p-5 print:hidden">
+      <section className="bg-surface border border-line rounded-lg p-3 sm:p-5 print:hidden">
         <div className="flex gap-1 flex-wrap" role="group" aria-label="Report period">
           {PERIODS.map((option) => (
             <button
               key={option.id}
               type="button"
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+              className={`min-h-11 px-3 py-2 rounded text-xs font-medium transition-colors ${
                 period === option.id
                   ? "bg-accent-soft text-accent-dark"
                   : "text-ink-soft hover:bg-surface-2"
@@ -267,8 +267,8 @@ export default function Report() {
         <div className="bg-surface border border-line rounded-lg h-96 flex items-center justify-center" />
       ) : report ? (
         <article className="bg-surface border border-line rounded-lg overflow-hidden" aria-busy={loading}>
-          <header className="px-6 py-5 border-b border-line flex items-start justify-between">
-            <div>
+          <header className="flex flex-col gap-3 border-b border-line px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:py-5">
+            <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Ending report</p>
               <h2 className="text-lg font-serif font-medium text-ink">
                 {formatDateRange(report.from, report.to)}
@@ -320,7 +320,7 @@ export default function Report() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-6">
+              <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4 sm:p-6">
                 <div className="flex flex-col gap-1">
                   <span className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Shift closes</span>
                   <strong className="text-lg font-serif font-medium text-ink">{fmt(report.closing_count)}</strong>
@@ -345,7 +345,7 @@ export default function Report() {
                 </div>
               </div>
 
-              <section className="border-t border-line px-6 py-4">
+              <section className="border-t border-line px-4 py-4 sm:px-6">
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h3 className="text-lg font-serif font-medium text-ink">Stock movement &amp; variance</h3>
@@ -357,7 +357,7 @@ export default function Report() {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse text-sm">
+                  <table className="w-full min-w-[760px] border-collapse text-sm">
                     <thead>
                       <tr className="text-left border-b border-line">
                         <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider">Ingredient</th>
@@ -417,14 +417,14 @@ export default function Report() {
                     </tbody>
                   </table>
                 </div>
-                <p className="px-6 pt-2 pb-6 text-xs text-muted">
+                <p className="px-4 pb-5 pt-2 text-xs text-muted sm:px-6 sm:pb-6">
                   Actual usage = opening + deliveries − waste − ending stock. Variance =
                   actual − theoretical. A positive gap is stock that left without a
                   recorded sale; a negative gap is less used than the recipes expected.
                 </p>
               </section>
 
-              <section className="border-t border-line px-6 py-4">
+              <section className="border-t border-line px-4 py-4 sm:px-6">
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h3 className="text-lg font-serif font-medium text-ink">Shift closes</h3>
@@ -437,7 +437,7 @@ export default function Report() {
                   </span>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse text-sm">
+                  <table className="w-full min-w-[480px] border-collapse text-sm">
                     <thead>
                       <tr className="text-left border-b border-line">
                         <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider">Date</th>
@@ -472,8 +472,8 @@ export default function Report() {
                 </div>
               </section>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
-                <section className="border-t border-line px-6 py-4">
+              <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:grid-cols-2">
+                <section className="border-t border-line px-0 py-4">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h3 className="text-lg font-serif font-medium text-ink">Drinks sold</h3>
@@ -486,7 +486,7 @@ export default function Report() {
                     </span>
                   </div>
                   {report.sales.length === 0 ? (
-                    <p className="px-6 pt-2 pb-6 text-xs text-muted">
+                    <p className="pt-2 pb-6 text-xs text-muted">
                       No drinks were recorded in this range.
                     </p>
                   ) : (
@@ -511,7 +511,7 @@ export default function Report() {
                   )}
                 </section>
 
-                <section className="border-t border-line px-6 py-4">
+                <section className="border-t border-line px-0 py-4">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h3 className="text-lg font-serif font-medium text-ink">Shift notes</h3>
@@ -524,11 +524,11 @@ export default function Report() {
                     </span>
                   </div>
                   {report.notes.length === 0 ? (
-                    <p className="px-6 pt-2 pb-6 text-xs text-muted">
+                    <p className="pt-2 pb-6 text-xs text-muted">
                       No notes were left in this range.
                     </p>
                   ) : (
-                    <ul className="px-6 pb-6 space-y-2">
+                    <ul className="pb-6 space-y-2">
                       {report.notes.map((note) => (
                         <li key={`${note.date}-${note.shift}`}>
                           <strong className="text-ink">
@@ -547,7 +547,7 @@ export default function Report() {
                 </section>
               </div>
 
-              <footer className="px-6 py-4 border-t border-line text-xs text-muted flex justify-between">
+              <footer className="flex flex-col gap-2 border-t border-line px-4 py-4 text-xs text-muted sm:flex-row sm:justify-between sm:px-6">
                 <span>
                   {report.closing_count} shift close{report.closing_count === 1 ? "" : "s"} ·
                   saved snapshots only

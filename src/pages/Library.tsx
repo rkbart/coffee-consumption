@@ -143,23 +143,23 @@ export default function Library() {
         </div>
       )}
 
-      <div className="flex items-start justify-between gap-3 mb-4">
+      <div className="mb-4 flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <SearchField
           value={search}
           onChange={setSearch}
           placeholder="Search ingredients, groups, packaging…"
           label="Search the costing library"
         />
-        <p className="flex-1 text-sm text-muted leading-relaxed">
+        <p className="min-w-0 text-sm leading-relaxed text-muted sm:flex-1">
           {query
             ? `${totalMatches} result${totalMatches === 1 ? "" : "s"} for “${debouncedSearch.trim()}”`
             : `${ingredients.length} ingredients · ${packaging.length} packaging`}
         </p>
       </div>
 
-      <section className="bg-surface border border-line rounded-lg p-5">
+      <section className="rounded-lg border border-line bg-surface p-3 sm:p-5">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-3">
-          <div className="flex items-center gap-2" role="tablist" aria-label="Library section">
+          <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Library section">
             <button
               type="button"
               role="tab"
@@ -325,7 +325,7 @@ export default function Library() {
                             {material.description && (
                               <p className="text-sm text-muted">{material.description}</p>
                             )}
-                            <div className="grid grid-cols-3 gap-3 text-xs">
+                            <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-3">
                               <div className="flex flex-col gap-0.5">
                                 <span className="text-muted uppercase tracking-wider text-[10px]">Pack price</span>
                                 <span className="text-ink font-medium">

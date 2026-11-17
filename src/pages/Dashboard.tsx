@@ -79,7 +79,7 @@ export default function Dashboard() {
             Add your drinks and their recipes, then take your first closing count to see
             theoretical versus actual usage.
           </p>
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             <Link className="bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors inline-flex items-center gap-2" to="/recipes">
               <IconRecipes size={17} /> Set up recipes
             </Link>
@@ -91,9 +91,9 @@ export default function Dashboard() {
       ) : (
         <>
           <section className="mb-6">
-            <article className="bg-surface border border-line rounded-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
+            <article className="bg-surface border border-line rounded-lg p-4 sm:p-6">
+              <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Latest closing</p>
                   <h2 className="text-xl font-serif font-medium text-ink">{formatDate(latest.date, "long")}</h2>
                   <p className="mt-0.5 text-sm text-muted">
@@ -194,8 +194,8 @@ export default function Dashboard() {
             </div>
           </section>
 
-          <section className="bg-surface border border-line rounded-lg p-5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <section className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
               <span className="w-8 h-8 rounded bg-accent-soft flex items-center justify-center text-accent-dark"><IconReport size={20} /></span>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Month to date</p>
@@ -206,7 +206,7 @@ export default function Dashboard() {
                 </p>
               </div>
             </div>
-            <div className="flex gap-4">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
               <div>
                 <strong className="text-2xl font-serif font-medium text-ink">{report ? fmt(report.closing_count) : "—"}</strong>
                 <span className="text-xs text-muted block">shift closes</span>
@@ -235,7 +235,7 @@ export default function Dashboard() {
           </section>
 
           <section className="mt-6 bg-surface border border-line rounded-lg overflow-hidden">
-            <div className="flex items-start justify-between mb-4 pb-2 border-b border-line px-5">
+            <div className="flex flex-wrap items-start justify-between gap-2 border-b border-line px-4 pb-2 pt-4 sm:mb-4 sm:px-5 sm:pt-0">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Latest closing</p>
                 <h2 className="text-lg font-serif font-medium text-ink">Where the stock went</h2>
@@ -245,8 +245,8 @@ export default function Dashboard() {
               </Link>
             </div>
 
-            <div className="overflow-x-auto px-5 pb-4">
-              <table className="w-full border-collapse text-sm">
+            <div className="overflow-x-auto px-3 pb-4 sm:px-5">
+              <table className="w-full min-w-[560px] border-collapse text-sm">
                 <thead>
                   <tr className="text-left border-b border-line">
                     <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider">Ingredient</th>
@@ -307,7 +307,7 @@ export default function Dashboard() {
           </section>
 
           <section className="mt-6 bg-surface border border-line rounded-lg overflow-hidden">
-            <div className="flex items-start justify-between mb-4 pb-2 border-b border-line px-5">
+            <div className="flex flex-wrap items-start justify-between gap-2 border-b border-line px-4 pb-2 pt-4 sm:mb-4 sm:px-5 sm:pt-0">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Recent</p>
                 <h2 className="text-lg font-serif font-medium text-ink">Closing log</h2>

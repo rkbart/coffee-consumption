@@ -42,14 +42,14 @@ export default function Pagination({
   const end = Math.min(total, page * pageSize);
 
   return (
-    <div className="flex items-center justify-between gap-4 mt-6 pt-4 border-t border-line">
+    <div className="mt-6 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       <p className="text-sm text-muted">
         Showing {start}–{end} of {total} {label}
       </p>
-      <nav className="flex items-center gap-1" aria-label={`${label} pages`}>
+      <nav className="flex flex-wrap items-center gap-1" aria-label={`${label} pages`}>
         <button
           type="button"
-          className="px-2.5 py-1.5 bg-surface border border-line rounded-lg text-ink hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50 disabled:pointer-events-none"
+          className="flex h-11 min-w-11 items-center justify-center rounded-lg border border-line bg-surface px-2.5 text-ink hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50 disabled:pointer-events-none"
           onClick={() => onPageChange(page - 1)}
           disabled={page === 1}
           aria-label="Previous page"
@@ -61,7 +61,7 @@ export default function Pagination({
             <button
               type="button"
               key={token}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${
+              className={`flex h-11 min-w-11 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
                 token === page
                   ? "bg-ink text-white"
                   : "bg-surface text-ink hover:bg-surface-2 border border-line"
@@ -80,7 +80,7 @@ export default function Pagination({
         )}
         <button
           type="button"
-          className="px-2.5 py-1.5 bg-surface border border-line rounded-lg text-ink hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50 disabled:pointer-events-none"
+          className="flex h-11 min-w-11 items-center justify-center rounded-lg border border-line bg-surface px-2.5 text-ink hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50 disabled:pointer-events-none"
           onClick={() => onPageChange(page + 1)}
           disabled={page === pageCount}
           aria-label="Next page"

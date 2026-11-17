@@ -153,7 +153,7 @@ export default function Recipes() {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+      <div className="mb-4 flex min-w-0 flex-col gap-3 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center lg:flex lg:flex-row lg:items-start lg:justify-between lg:gap-4">
         <div className="flex-1 min-w-0">
           <SearchField
             value={search}
@@ -162,7 +162,7 @@ export default function Recipes() {
             label="Search recipes"
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <label className="flex items-center gap-2 text-sm font-medium text-ink-soft">
             <span>Menu group</span>
             <select
@@ -179,7 +179,7 @@ export default function Recipes() {
             </select>
           </label>
         </div>
-        <p className="flex-1 text-sm text-muted leading-relaxed">
+        <p className="min-w-0 text-sm leading-relaxed text-muted sm:col-span-2 lg:flex-1">
           {summary}
         </p>
       </div>
@@ -323,8 +323,8 @@ function RecipeCard({
 
   return (
     <article className="bg-surface border border-line rounded-lg p-4 hover:border-line-strong transition-colors">
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div>
+      <div className="mb-3 flex min-w-0 items-start justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-xs font-serif font-medium text-ink-soft uppercase tracking-wider">{product.category}</p>
           <h3 className="text-lg font-serif font-medium text-ink">{product.name}</h3>
           <span className="text-xs text-muted">
@@ -352,8 +352,8 @@ function RecipeCard({
         </div>
       </div>
 
-      <div className="overflow-x-auto mb-3">
-        <table className="w-full text-sm border-collapse">
+      <div className="mb-3 overflow-x-auto">
+        <table className="w-full min-w-[430px] border-collapse text-sm">
           <thead>
             <tr className="text-left">
               <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider">Ingredient</th>
@@ -408,7 +408,8 @@ function RecipeCard({
             No packaging selected. Edit this drink to add a cup, lid, straw or bag.
           </p>
         ) : (
-          <table className="w-full text-sm border-collapse">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[380px] border-collapse text-sm">
             <thead>
               <tr className="text-left">
                 <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider">Material</th>
@@ -443,6 +444,7 @@ function RecipeCard({
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
@@ -759,7 +761,7 @@ function BeverageModal({
               (l) => l.item.ingredient_id === Number(line.ingredient_id),
             );
             return (
-              <div key={index} className="flex items-center gap-2">
+              <div key={index} className="flex min-w-0 flex-wrap items-center gap-2">
                 <select
                   value={line.ingredient_id}
                   onChange={(e) =>
@@ -767,7 +769,7 @@ function BeverageModal({
                       ingredient_id: e.target.value === "" ? "" : Number(e.target.value),
                     })
                   }
-                  className="flex-1 bg-surface border border-line rounded-lg px-3 py-2 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
+                  className="min-w-[9rem] flex-1 bg-surface border border-line rounded-lg px-3 py-2 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
                 >
                   <option value="">Choose ingredient…</option>
                   {ingredients.map((i) => (
@@ -796,7 +798,7 @@ function BeverageModal({
                 </span>
                 <button
                   type="button"
-                  className="p-1 hover:bg-red-soft rounded-sm text-muted hover:text-red focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-1"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-red-soft hover:text-red focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-1"
                   aria-label="Remove ingredient"
                   onClick={() => setLines((current) => current.filter((_, i) => i !== index))}
                 >
@@ -805,7 +807,7 @@ function BeverageModal({
               </div>
             );
           })}
-          <div className="flex items-center gap-2 pt-2 border-t border-line">
+          <div className="flex flex-wrap items-center gap-2 border-t border-line pt-2">
             <button
               type="button"
               className="flex-1 bg-surface border border-line rounded-lg px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
@@ -840,7 +842,7 @@ function BeverageModal({
               (row) => row.line.packaging_id === Number(line.packaging_id),
             );
             return (
-              <div key={index} className="flex items-center gap-2">
+              <div key={index} className="flex min-w-0 flex-wrap items-center gap-2">
                 <select
                   value={line.packaging_id}
                   onChange={(e) =>
@@ -848,7 +850,7 @@ function BeverageModal({
                       packaging_id: e.target.value === "" ? "" : Number(e.target.value),
                     })
                   }
-                  className="flex-1 bg-surface border border-line rounded-lg px-3 py-2 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
+                  className="min-w-[9rem] flex-1 bg-surface border border-line rounded-lg px-3 py-2 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
                 >
                   <option value="">Choose packaging…</option>
                   {packagingMaterials.map((row) => (
@@ -876,7 +878,7 @@ function BeverageModal({
                 </span>
                 <button
                   type="button"
-                  className="p-1 hover:bg-red-soft rounded-sm text-muted hover:text-red focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-1"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-red-soft hover:text-red focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-1"
                   aria-label="Remove packaging"
                   onClick={() =>
                     setPackLines((current) => current.filter((_, i) => i !== index))

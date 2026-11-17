@@ -27,24 +27,24 @@ export default function Modal({ open, title, subtitle, onClose, children, wide }
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={onClose} role="presentation">
+    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-ink/30 p-2 sm:items-center sm:p-4" onMouseDown={onClose} role="presentation">
       <div
-        className={`max-w-2xl w-full bg-surface border border-line rounded-lg shadow-xl overflow-hidden flex flex-col ${wide ? "max-w-4xl" : ""}`}
+        className={`flex max-h-[calc(100dvh-1rem)] w-full max-w-2xl flex-col overflow-hidden rounded-t-xl border border-line bg-surface shadow-xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-xl ${wide ? "sm:max-w-4xl" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-label={title}
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <header className="px-6 py-4 border-b border-line flex items-center justify-between">
-          <div>
+        <header className="flex shrink-0 items-start justify-between gap-3 border-b border-line px-4 py-4 sm:px-6">
+          <div className="min-w-0">
             <h2 className="text-xl font-serif font-medium text-ink">{title}</h2>
             {subtitle && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}
           </div>
-          <button className="p-1 hover:bg-surface-2 rounded-sm text-muted hover:text-accent" onClick={onClose} aria-label="Close dialog">
+          <button className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-surface-2 hover:text-accent" onClick={onClose} aria-label="Close dialog">
             <IconClose size={18} />
           </button>
         </header>
-        <div className="p-6 overflow-y-auto max-h-[80vh]">{children}</div>
+        <div className="modal-body min-h-0 overflow-y-auto p-4 sm:p-6">{children}</div>
       </div>
     </div>
   );

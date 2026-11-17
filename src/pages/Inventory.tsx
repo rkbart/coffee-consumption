@@ -273,7 +273,7 @@ export default function Inventory() {
         title="Daily count"
         description="Enter what you opened with, what was delivered or wasted, and what is left. Compare it against the recipe and POS usage."
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               className="p-1.5 hover:bg-surface-2 rounded-lg text-muted hover:text-accent transition-colors"
@@ -303,11 +303,11 @@ export default function Inventory() {
         }
       />
 
-      <section className="bg-surface border border-line rounded-lg p-5">
-        <div className="flex items-center justify-between">
+      <section className="rounded-lg border border-line bg-surface p-3 sm:p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Shift</p>
-            <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Count shift">
+            <div className="flex flex-wrap gap-1" role="tablist" aria-label="Count shift">
               {SHIFTS.map((option) => {
                 const saved = dayShifts.find((row) => row.shift === option.id);
                 return (
@@ -338,14 +338,14 @@ export default function Inventory() {
               })}
             </div>
           </div>
-          <label className="space-y-1">
+          <label className="w-full space-y-1 sm:max-w-sm">
             <span className="text-xs font-semibold text-ink-soft uppercase tracking-wider block">Prepared by</span>
             <input
               value={preparedBy}
               onChange={(event) => setPreparedBy(event.target.value)}
               placeholder="Name or initials on this shift"
               maxLength={80}
-              className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
+              className="w-full min-w-0 bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
             />
             <small className="text-xs text-muted">Shown beside this shift in history and reports.</small>
           </label>
@@ -428,7 +428,7 @@ export default function Inventory() {
             </div>
 
             <div className="bg-surface border border-line rounded-lg overflow-hidden">
-              <div className="flex items-start justify-between mb-3 pb-2 border-b border-line px-5">
+              <div className="flex flex-col gap-1 border-b border-line px-3 pb-2 pt-3 sm:mb-3 sm:flex-row sm:items-start sm:justify-between sm:px-5 sm:pt-0">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Inventory</p>
                   <h2 className="text-lg font-serif font-medium text-ink">Count sheet · {shiftShort(shift)}</h2>
@@ -436,8 +436,8 @@ export default function Inventory() {
                 <span className="text-xs text-muted">All weights in g · liquids in ml</span>
               </div>
 
-              <div className="overflow-x-auto px-5 pb-4">
-                <table className="w-full border-collapse text-sm">
+              <div className="overflow-x-auto px-3 pb-4 sm:px-5">
+                <table className="w-full min-w-[680px] border-collapse text-sm">
                   <thead>
                     <tr className="text-left border-b border-line">
                       <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider">Ingredient</th>
@@ -493,7 +493,7 @@ export default function Inventory() {
             </div>
 
             <div className="bg-surface border border-line rounded-lg overflow-hidden">
-              <div className="flex items-start justify-between mb-3 pb-2 border-b border-line px-5">
+              <div className="flex flex-wrap items-start justify-between gap-2 border-b border-line px-3 pb-2 pt-3 sm:mb-3 sm:px-5 sm:pt-0">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Till</p>
                   <h2 className="text-lg font-serif font-medium text-ink">Drinks sold this shift</h2>
@@ -624,7 +624,7 @@ export default function Inventory() {
 
           <aside className="lg:col-span-4 flex flex-col gap-4">
             <div className="bg-surface border border-line rounded-lg overflow-hidden">
-              <div className="flex items-start justify-between mb-3 pb-2 border-b border-line px-4">
+              <div className="flex flex-wrap items-start justify-between gap-2 border-b border-line px-3 pb-2 pt-3 sm:mb-3 sm:px-4 sm:pt-0">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">The reconciliation</p>
                   <h2 className="text-lg font-serif font-medium text-ink">Variance</h2>
