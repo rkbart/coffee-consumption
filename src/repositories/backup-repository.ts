@@ -3,8 +3,6 @@ import {
   settings as settingsTable,
   ingredients as ingredientsTable,
   packaging as packagingTable,
-  packagingSets as packagingSetsTable,
-  packagingSetItems as packagingSetItemsTable,
   products as productsTable,
   recipeItems as recipeItemsTable,
   productPackaging as productPackagingTable,
@@ -86,17 +84,6 @@ export async function exportBackupCsv(): Promise<string> {
     lines.push(csvRow('packaging', { name: row.name, description: row.description, unit: row.unit, pack_price: row.pack_price, pack_size: row.pack_size, qty_needed: row.qty_needed, waste_pct: row.waste_pct, sort_order: row.sort_order }));
   }
 
-  for (const row of await db.select().from(packagingSetsTable).orderBy(packagingSetsTable.sort_order, packagingSetsTable.name, packagingSetsTable.id)) {
-    lines.push(csvRow('packaging_set', { name: row.name, description: row.description, sort_order: row.sort_order }));
-  }
-
-  const allSetItems = await db.select().from(packagingSetItemsTable).orderBy(packagingSetItemsTable.sort_order);
-  for (const item of allSetItems) {
-    const set = (await db.select().from(packagingSetsTable).where(eq(packagingSetsTable.id, item.set_id)))[0];
-    const material = (await db.select().from(packagingTable).where(eq(packagingTable.id, item.packaging_id)))[0];
-    lines.push(csvRow('packaging_set_item', { set_name: set?.name ?? '', packaging_name: material?.name ?? '', qty_needed: item.qty_needed, notes: item.notes, sort_order: item.sort_order }));
-  }
-
   const products = await db.select().from(productsTable).orderBy(productsTable.category, productsTable.name, productsTable.size_label, productsTable.id);
   for (const product of products) {
     lines.push(csvRow('product', {
@@ -110,8 +97,8 @@ export async function exportBackupCsv(): Promise<string> {
       lines.push(csvRow('recipe_item', { product_name: product.name, size_label: product.size_label, ingredient_name: ingredient?.name ?? '', qty: item.qty }));
     }
     for (const line of await db.select().from(productPackagingTable).where(eq(productPackagingTable.product_id, product.id)).orderBy(productPackagingTable.id)) {
-      const set = (await db.select().from(packagingSetsTable).where(eq(packagingSetsTable.id, line.packaging_set_id)))[0];
-      lines.push(csvRow('product_packaging', { product_name: product.name, size_label: product.size_label, packaging_name: set?.name ?? '', qty: line.qty }));
+      const material = (await db.select().from(packagingTable).where(eq(packagingTable.id, line.packaging_id)))[0];
+      lines.push(csvRow('product_packaging', { product_name: product.name, size_label: product.size_label, packaging_name: material?.name ?? '', qty: line.qty }));
     }
   }
 
@@ -158,8 +145,6 @@ export async function importBackupCsv(csv: string): Promise<{ ok: boolean; count
   const settingsRows = records.filter((r) => r.type === 'setting');
   const ingredientRows = records.filter((r) => r.type === 'ingredient');
   const packagingRows = records.filter((r) => r.type === 'packaging');
-  const packagingSetRows = records.filter((r) => r.type === 'packaging_set');
-  const packagingSetItemRows = records.filter((r) => r.type === 'packaging_set_item');
   const productRows = records.filter((r) => r.type === 'product');
   const recipeItemRows = records.filter((r) => r.type === 'recipe_item');
   const productPackagingRows = records.filter((r) => r.type === 'product_packaging');
@@ -202,25 +187,6 @@ export async function importBackupCsv(csv: string): Promise<{ ok: boolean; count
     packagingIdByKey.set(values.name, row.id);
   }
 
-  const packagingSetIdByKey = new Map<string, number>();
-  for (const { values } of packagingSetRows) {
-    const [setRow] = await db.insert(packagingSetsTable).values({
-      name: values.name,
-      description: values.description || '',
-      sort_order: number(values.sort_order),
-    }).returning();
-    packagingSetIdByKey.set(values.name, setRow.id);
-    for (const { values: itemValues } of packagingSetItemRows.filter((r) => r.values.set_name === values.name)) {
-      await db.insert(packagingSetItemsTable).values({
-        set_id: setRow.id,
-        packaging_id: packagingIdByKey.get(itemValues.packaging_name) ?? 0,
-        qty_needed: number(itemValues.qty_needed) || 1,
-        notes: itemValues.notes || '',
-        sort_order: number(itemValues.sort_order),
-      });
-    }
-  }
-
   const productIdByKey = new Map<string, number>();
   for (const { values } of productRows) {
     const [row] = await db.insert(productsTable).values({
@@ -248,9 +214,9 @@ export async function importBackupCsv(csv: string): Promise<{ ok: boolean; count
 
   for (const { values } of productPackagingRows) {
     const productId = productIdByKey.get(productKey(values.product_name, values.size_label));
-    const packagingSetId = packagingSetIdByKey.get(values.packaging_name);
-    if (productId && packagingSetId) {
-      await db.insert(productPackagingTable).values({ product_id: productId, packaging_set_id: packagingSetId, qty: number(values.qty) });
+    const packagingId = packagingIdByKey.get(values.packaging_name);
+    if (productId && packagingId) {
+      await db.insert(productPackagingTable).values({ product_id: productId, packaging_id: packagingId, qty: number(values.qty) });
     }
   }
 
@@ -304,8 +270,6 @@ export async function importBackupCsv(csv: string): Promise<{ ok: boolean; count
   const counts = {
     ingredients: ingredientRows.length,
     packaging: packagingRows.length,
-    packaging_sets: packagingSetRows.length,
-    packaging_set_items: packagingSetItemRows.length,
     products: productRows.length,
     closings: closingRows.length,
   };

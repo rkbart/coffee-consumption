@@ -5,11 +5,10 @@ import SearchField from "../components/SearchField";
 import {
   IngredientModal,
   PackagingModal,
-  PackagingSetModal,
 } from "../components/LibraryModals";
 import { useDebouncedValue } from "../hooks";
 import { api } from "../api";
-import type { Ingredient, PackagingMaterial, PackagingSet } from "../types";
+import type { Ingredient, PackagingMaterial } from "../types";
 import { fmt, money, unitLabel, unitMoney } from "../lib";
 import { IconCoffee, IconMilk, IconPlus } from "../components/Icons";
 
@@ -23,42 +22,35 @@ const packagingUnitCost = (material: PackagingMaterial) => {
   return material.pack_price > 0 && net > 0 ? material.pack_price / net : null;
 };
 
-const setUnitCost = (set: PackagingSet) => {
-  return set.items.reduce((sum, item) => {
-    const net = item.pack_size * (1 - (item.waste_pct || 0) / 100);
-    const itemUnitCost = item.pack_price > 0 && net > 0 ? item.pack_price / net : 0;
-    return sum + itemUnitCost * item.qty_needed;
-  }, 0);
+const packagingTotalCost = (material: PackagingMaterial) => {
+  const unitCost = packagingUnitCost(material);
+  return unitCost !== null ? unitCost * material.qty_needed : null;
 };
 
 export default function Library() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [packaging, setPackaging] = useState<PackagingMaterial[]>([]);
-  const [packagingSets, setPackagingSets] = useState<PackagingSet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search, 250);
-  const [tab, setTab] = useState<"ingredients" | "packaging" | "sets">("ingredients");
+  const [tab, setTab] = useState<"ingredients" | "packaging">("ingredients");
   const [page, setPage] = useState(1);
 
   const [ingredientModal, setIngredientModal] = useState<Ingredient | "new" | null>(null);
   const [packagingModal, setPackagingModal] = useState<PackagingMaterial | "new" | null>(
     null,
   );
-  const [setModal, setSetModal] = useState<PackagingSet | "new" | null>(null);
   const [toast, setToast] = useState("");
 
   const load = async () => {
     try {
-      const [nextIngredients, nextPackaging, nextSets] = await Promise.all([
+      const [nextIngredients, nextPackaging] = await Promise.all([
         api.ingredients(),
         api.packaging(),
-        api.packagingSets(),
       ]);
       setIngredients(nextIngredients);
       setPackaging(nextPackaging);
-      setPackagingSets(nextSets);
       setError("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load the costing library");
@@ -90,21 +82,13 @@ export default function Library() {
   const filteredPackaging = useMemo(
     () =>
       packaging.filter((material) =>
-        matchesQuery(query, [material.name, material.description, material.unit]),
-      ),
-    [packaging, query],
-  );
-
-  const filteredSets = useMemo(
-    () =>
-      packagingSets.filter((set) =>
         matchesQuery(query, [
-          set.name,
-          set.description,
-          ...set.items.map((i) => i.packaging_name),
+          material.name,
+          material.description,
+          material.unit,
         ]),
       ),
-    [packagingSets, query],
+    [packaging, query],
   );
 
   useEffect(() => {
@@ -112,15 +96,12 @@ export default function Library() {
   }, [query, tab]);
 
   const activeTotal =
-    tab === "ingredients" ? filteredIngredients.length
-    : tab === "packaging" ? filteredPackaging.length
-    : filteredSets.length;
+    tab === "ingredients" ? filteredIngredients.length : filteredPackaging.length;
   const pageCount = Math.max(1, Math.ceil(activeTotal / PER_PAGE));
   const safePage = Math.min(page, pageCount);
   const start = (safePage - 1) * PER_PAGE;
   const pagedIngredients = filteredIngredients.slice(start, start + PER_PAGE);
   const pagedPackaging = filteredPackaging.slice(start, start + PER_PAGE);
-  const pagedSets = filteredSets.slice(start, start + PER_PAGE);
 
   const ingredientGroups = pagedIngredients.reduce<Record<string, Ingredient[]>>(
     (acc, ingredient) => {
@@ -130,24 +111,24 @@ export default function Library() {
     {},
   );
 
-  const totalMatches = filteredIngredients.length + filteredPackaging.length + filteredSets.length;
+  const totalMatches = filteredIngredients.length + filteredPackaging.length;
 
   return (
     <>
       <PageHeader
         eyebrow="The costing library"
         title="Ingredients & packaging"
-        description="Every purchased ingredient, packaging material and packaging set in one place. A set groups cups, lids, straws and bags together — its total is added to each recipe."
+        description="Every purchased ingredient and packaging material in one place. Packaging shows cost per piece and the total per drink based on quantity needed."
         actions={
           <button
             className="btn btn-primary"
-            onClick={() => {
-              if (tab === "ingredients") setIngredientModal("new");
-              else if (tab === "packaging") setPackagingModal("new");
-              else setSetModal("new");
-            }}
+            onClick={() =>
+              tab === "ingredients"
+                ? setIngredientModal("new")
+                : setPackagingModal("new")
+            }
           >
-            <IconPlus size={17} /> Add {tab === "ingredients" ? "ingredient" : tab === "packaging" ? "packaging" : "set"}
+            <IconPlus size={17} /> Add {tab === "ingredients" ? "ingredient" : "packaging"}
           </button>
         }
       />
@@ -158,13 +139,13 @@ export default function Library() {
         <SearchField
           value={search}
           onChange={setSearch}
-          placeholder="Search ingredients, packaging, sets…"
+          placeholder="Search ingredients, groups, packaging…"
           label="Search the costing library"
         />
         <p className="search-summary" aria-live="polite">
           {query
             ? `${totalMatches} result${totalMatches === 1 ? "" : "s"} for “${debouncedSearch.trim()}”`
-            : `${ingredients.length} ingredients · ${packaging.length} packaging · ${packagingSets.length} sets`}
+            : `${ingredients.length} ingredients · ${packaging.length} packaging`}
         </p>
       </div>
 
@@ -191,24 +172,14 @@ export default function Library() {
               <IconMilk size={15} /> Packaging
               <span className="tab-count">{filteredPackaging.length}</span>
             </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === "sets"}
-              className={tab === "sets" ? "active" : ""}
-              onClick={() => setTab("sets")}
-            >
-              <IconPlus size={15} /> Sets
-              <span className="tab-count">{filteredSets.length}</span>
-            </button>
           </div>
           <button
             className="btn btn-quiet btn-sm"
-            onClick={() => {
-              if (tab === "ingredients") setIngredientModal("new");
-              else if (tab === "packaging") setPackagingModal("new");
-              else setSetModal("new");
-            }}
+            onClick={() =>
+              tab === "ingredients"
+                ? setIngredientModal("new")
+                : setPackagingModal("new")
+            }
           >
             <IconPlus size={15} /> Add
           </button>
@@ -217,9 +188,7 @@ export default function Library() {
         <p className="muted panel-note">
           {tab === "ingredients"
             ? "Pack price is spread across the pack size, net of waste. For a base you make yourself, use the batch cost and batch yield."
-            : tab === "packaging"
-              ? "Cups, lids, straws and bags are costed per piece. Price per piece × quantity needed = packaging cost per drink."
-              : "A set is a group of packaging materials used together on one drink — e.g. a 16 oz cup, lid and straw. The set total is added to each recipe."}
+            : "Cups, lids, straws and bags are costed per piece. Price per piece × quantity needed = packaging cost per drink."}
         </p>
 
         {loading ? (
@@ -284,7 +253,7 @@ export default function Library() {
               </>
             )}
           </>
-        ) : tab === "packaging" ? (
+        ) : (
           <>
             {filteredPackaging.length === 0 ? (
               <div className="library-empty">
@@ -297,125 +266,110 @@ export default function Library() {
                 </button>
               </div>
             ) : (
-              <div className="ingredient-group">
-                {pagedPackaging.map((material) => {
-                  const unitCost = packagingUnitCost(material);
-                  return (
-                    <button
-                      key={material.id}
-                      className="ingredient-row library-row"
-                      onClick={() => setPackagingModal(material)}
-                    >
-                      <span className="ingredient-dot other" />
-                      <span className="ingredient-copy">
-                        <span className="ingredient-name">{material.name}</span>
-                        {material.description && <span className="ingredient-desc">{material.description}</span>}
-                        <span className="ingredient-price">
-                          {material.pack_price > 0
-                            ? `${money(material.pack_price)} / ${fmt(material.pack_size)} ${unitLabel(material.unit)}`
-                            : "Add a purchase price"}
-                        </span>
-                      </span>
-                      <span className="unit-chip">
-                        {unitCost !== null
-                          ? `${unitMoney(unitCost)}/${unitLabel(material.unit)}`
-                          : unitLabel(material.unit)}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            {filteredSets.length === 0 ? (
-              <div className="library-empty">
-                <p>{query ? "No packaging sets match this search." : "No packaging sets yet."}</p>
-                <p className="muted">Create a set, then add cups, lids, straws or bags to it.</p>
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={() => (query ? setSearch("") : setSetModal("new"))}
-                >
-                  {query ? "Clear search" : "Add the first set"}
-                </button>
-              </div>
-            ) : (
-              <div className="set-group">
-                {pagedSets.map((set) => {
-                  const cost = setUnitCost(set);
-                  return (
-                    <button
-                      key={set.id}
-                      className="set-row library-row"
-                      onClick={() => setSetModal(set)}
-                    >
-                      <span className="set-dot" />
-                      <span className="set-copy">
-                        <span className="set-name">{set.name}</span>
-                        {set.description && <span className="set-desc">{set.description}</span>}
-                        <span className="set-items">
-                          {set.items.map((item) => (
-                            <span key={item.id} className="set-item-chip">
-                              {item.qty_needed}× {item.packaging_name}
-                              {item.notes ? ` · ${item.notes}` : ""}
-                            </span>
-                          ))}
-                        </span>
-                        <span className="set-cost">
-                          {cost > 0 ? money(cost) : "Add prices to cost"}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+              <>
+                <div className="packaging-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Material</th>
+                        <th>Brand / notes</th>
+                        <th>Pack price</th>
+                        <th>Pack size</th>
+                        <th>Price / piece</th>
+                        <th>Qty / drink</th>
+                        <th>Cost / drink</th>
+                        <th>Unit</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pagedPackaging.map((material) => {
+                        const unitCost = packagingUnitCost(material);
+                        const totalCost = packagingTotalCost(material);
+                        return (
+                          <tr key={material.id} className="packaging-row">
+                            <td>
+                              <span className="ingredient-name">{material.name}</span>
+                            </td>
+                            <td className="muted small">
+                              {material.description || "—"}
+                            </td>
+                            <td className="numeric">
+                              {material.pack_price > 0
+                                ? money(material.pack_price)
+                                : "—"}
+                            </td>
+                            <td className="numeric">
+                              {fmt(material.pack_size)}
+                            </td>
+                            <td className="numeric">
+                              {unitCost !== null ? unitMoney(unitCost) : "—"}
+                            </td>
+                            <td className="numeric">
+                              {fmt(material.qty_needed)}
+                            </td>
+                            <td className="numeric cost-amount">
+                              {totalCost !== null ? money(totalCost) : "—"}
+                            </td>
+                            <td className="unit-chip">
+                              {unitLabel(material.unit)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  <tfoot>
+                    <tr className="packaging-totals">
+                      <td colSpan={6} className="label">
+                        Total packaging cost per drink:
+                      </td>
+                      <td className="numeric total">
+                        {money(
+                          pagedPackaging.reduce(
+                            (sum, m) => sum + (packagingTotalCost(m) ?? 0),
+                            0,
+                          ),
+                        )}
+                      </td>
+                      <td />
+                    </tr>
+                  </tfoot>
+                </div>
+                <Pagination
+                  page={safePage}
+                  pageCount={pageCount}
+                  total={activeTotal}
+                  pageSize={PER_PAGE}
+                  onPageChange={setPage}
+                  label="materials"
+                />
+              </>
             )}
           </>
         )}
 
-        <Pagination
-          page={safePage}
-          pageCount={pageCount}
-          total={activeTotal}
-          pageSize={PER_PAGE}
-          onPageChange={setPage}
-          label={tab === "ingredients" ? "ingredients" : tab === "packaging" ? "materials" : "sets"}
+        <IngredientModal
+          editing={ingredientModal}
+          onClose={() => setIngredientModal(null)}
+          onSaved={async (message) => {
+            setIngredientModal(null);
+            setToast(message);
+            await load();
+          }}
         />
+
+        <PackagingModal
+          editing={packagingModal}
+          onClose={() => setPackagingModal(null)}
+          onSaved={async (message) => {
+            setPackagingModal(null);
+            setToast(message);
+            await load();
+          }}
+        />
+
+        {toast && <div className="toast">{toast}</div>}
       </section>
-
-      <IngredientModal
-        editing={ingredientModal}
-        onClose={() => setIngredientModal(null)}
-        onSaved={async (message) => {
-          setIngredientModal(null);
-          setToast(message);
-          await load();
-        }}
-      />
-
-      <PackagingModal
-        editing={packagingModal}
-        onClose={() => setPackagingModal(null)}
-        onSaved={async (message) => {
-          setPackagingModal(null);
-          setToast(message);
-          await load();
-        }}
-      />
-
-      <PackagingSetModal
-        editing={setModal}
-        materials={packaging}
-        onClose={() => setSetModal(null)}
-        onSaved={async (message) => {
-          setSetModal(null);
-          setToast(message);
-          await load();
-        }}
-      />
-
-      {toast && <div className="toast">{toast}</div>}
     </>
   );
 }

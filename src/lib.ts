@@ -1,7 +1,7 @@
 import type {
   CountEntry,
   Ingredient,
-  PackagingSet,
+  PackagingMaterial,
   Product,
   ProductPackaging,
   RecipeItem,
@@ -322,11 +322,11 @@ export interface CostedLine {
 
 export interface CostedPackagingLine {
   line: ProductPackaging;
-  set?: PackagingSet;
-  setUnitCost: number;
+  material?: PackagingMaterial;
+  netRecovery: number;
+  unitCost: number;
   lineCost: number;
   missingCost: boolean;
-  missingSetNames: string[];
 }
 
 export interface RecipeCost {
@@ -359,10 +359,10 @@ export interface RecipeCost {
 export function recipeCost(
   product: Product,
   ingredients: Ingredient[],
-  packagingSets: PackagingSet[] = [],
+  packagingMaterials: PackagingMaterial[] = [],
 ): RecipeCost {
   const byId = new Map(ingredients.map((i) => [i.id, i]));
-  const setsById = new Map(packagingSets.map((s) => [s.id, s]));
+  const packagingById = new Map(packagingMaterials.map((p) => [p.id, p]));
   const missingCosts: string[] = [];
 
   const lines: CostedLine[] = product.recipe.map((item) => {
@@ -385,36 +385,21 @@ export function recipeCost(
   });
 
   const packagingLines: CostedPackagingLine[] = (product.packaging ?? []).map((line) => {
-    const set = setsById.get(line.packaging_set_id);
-    const missingSetNames: string[] = [];
-    let setUnitCost = 0;
-    let missingCost = false;
-
-    if (set) {
-      for (const item of set.items) {
-        const netRecovery =
-          (item.pack_size ?? 0) * (1 - (item.waste_pct ?? 0) / 100);
-        const itemMissing = item.pack_price <= 0 || netRecovery <= 0;
-        if (itemMissing && !missingCosts.includes(item.packaging_name)) {
-          missingCosts.push(item.packaging_name);
-        }
-        if (itemMissing) missingCost = true;
-        const itemUnitCost = itemMissing ? 0 : item.pack_price / netRecovery;
-        setUnitCost += itemUnitCost * item.qty_needed;
-      }
-      setUnitCost = round2(setUnitCost);
-    } else {
-      missingCost = true;
-      missingSetNames.push(line.packaging_set_name);
+    const material = packagingById.get(line.packaging_id);
+    const netRecovery =
+      (material?.pack_size ?? 0) * (1 - (material?.waste_pct ?? 0) / 100);
+    const missingCost = !material || material.pack_price <= 0 || netRecovery <= 0;
+    if (missingCost && !missingCosts.includes(line.packaging_name)) {
+      missingCosts.push(line.packaging_name);
     }
-
+    const unitCost = missingCost ? 0 : material!.pack_price / netRecovery;
     return {
       line,
-      set,
-      setUnitCost,
-      lineCost: round2(setUnitCost * line.qty),
+      material,
+      netRecovery,
+      unitCost,
+      lineCost: round2(unitCost * line.qty),
       missingCost,
-      missingSetNames,
     };
   });
 

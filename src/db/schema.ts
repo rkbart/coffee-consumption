@@ -64,34 +64,14 @@ export const recipeItems = sqliteTable('recipe_items', {
   productIdx: index('recipe_items_product_idx').on(t.product_id),
 }));
 
-export const packagingSets = sqliteTable('packaging_sets', {
-  id: integer('id').primaryKey(),
-  name: text('name').notNull(),
-  description: text('description').notNull().default(''),
-  sort_order: integer('sort_order').notNull().default(0),
-});
-
-export const packagingSetItems = sqliteTable('packaging_set_items', {
-  id: integer('id').primaryKey(),
-  set_id: integer('set_id')
-    .notNull()
-    .references(() => packagingSets.id, { onDelete: 'cascade' }),
-  packaging_id: integer('packaging_id')
-    .notNull()
-    .references(() => packaging.id, { onDelete: 'restrict' }),
-  qty_needed: real('qty_needed').notNull().default(1),
-  notes: text('notes').notNull().default(''),
-  sort_order: integer('sort_order').notNull().default(0),
-});
-
 export const productPackaging = sqliteTable('product_packaging', {
   id: integer('id').primaryKey(),
   product_id: integer('product_id')
     .notNull()
     .references(() => products.id, { onDelete: 'cascade' }),
-  packaging_set_id: integer('packaging_set_id')
+  packaging_id: integer('packaging_id')
     .notNull()
-    .references(() => packagingSets.id, { onDelete: 'cascade' }),
+    .references(() => packaging.id, { onDelete: 'restrict' }),
   qty: real('qty').notNull().default(1),
 }, (t) => ({
   productIdx: index('product_packaging_product_idx').on(t.product_id),
