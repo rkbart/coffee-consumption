@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/sqlite-proxy';
 import { SQLocalDrizzle } from 'sqlocal/drizzle';
 import * as schema from './schema';
-import { runMigrations } from './migrate';
+import { runMigrationsWithTimeout } from './migrate';
 
 /**
  * One SQLite database per origin (one browser, one profile — no users, no
@@ -21,4 +21,4 @@ export const db = drizzle(driver, batchDriver, { schema });
 
 export const sqlocalClient = client;
 
-export const migrationsReady = runMigrations(client);
+export const migrationsReady = runMigrationsWithTimeout(client);

@@ -8,23 +8,29 @@ function splitStatements(sql: string): string[] {
     .filter(Boolean);
 }
 
+async function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`DB step timed out: ${label}`)), 15_000)
+  );
+  return Promise.race([promise, timeout]);
+}
+
 /**
- * Applies any migrations not yet recorded in `_migrations`, in order, each
- * inside its own transaction so a failure partway through rolls back instead
- * of leaving the schema half-applied.
+ * Applies migrations with per-step timeouts so a hung OPFS worker fails fast
+ * instead of leaving the app on a blank page forever.
  */
-export async function runMigrations(client: SQLocalDrizzle): Promise<void> {
-  await client.sql`
-    CREATE TABLE IF NOT EXISTS _migrations (
-      id TEXT PRIMARY KEY,
-      applied_at INTEGER NOT NULL
-    )
-  `;
+export async function runMigrationsWithTimeout(client: SQLocalDrizzle): Promise<void> {
+  await withTimeout(
+    client.sql`CREATE TABLE IF NOT EXISTS _migrations (id TEXT PRIMARY KEY, applied_at INTEGER NOT NULL)`,
+    'create _migrations table'
+  );
 
-  // Foreign keys must be on for cascade deletes and restrict behaviour.
-  await client.sql`PRAGMA foreign_keys = ON`;
+  await withTimeout(client.sql`PRAGMA foreign_keys = ON`, 'PRAGMA foreign_keys');
 
-  const applied = await client.sql<{ id: string }>`SELECT id FROM _migrations`;
+  const applied = await withTimeout(
+    client.sql<{ id: string }>`SELECT id FROM _migrations`,
+    'SELECT id FROM _migrations'
+  );
   const appliedIds = new Set(applied.map((row) => row.id));
 
   for (const migration of migrations) {
@@ -32,25 +38,28 @@ export async function runMigrations(client: SQLocalDrizzle): Promise<void> {
 
     const statements = splitStatements(migration.sql);
 
-    await client.transaction(async (tx) => {
-      for (const statement of statements) {
-        try {
-          await tx.sql(statement);
-        } catch (err: unknown) {
-          const msg = err instanceof Error ? err.message : '';
-          // SQLite doesn't support IF NOT EXISTS for every statement, so
-          // tolerate errors from partially-applied previous runs.
-          if (
-            msg.includes('duplicate column name') ||
-            msg.includes('already exists') ||
-            msg.includes('already exists')
-          ) {
-            continue;
+    await withTimeout(
+      client.transaction(async (tx) => {
+        for (const statement of statements) {
+          try {
+            await withTimeout(tx.sql(statement), `migration ${migration.id} statement`);
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : '';
+            if (
+              msg.includes('duplicate column name') ||
+              msg.includes('already exists')
+            ) {
+              continue;
+            }
+            throw err;
           }
-          throw err;
         }
-      }
-      await tx.sql`INSERT INTO _migrations (id, applied_at) VALUES (${migration.id}, ${Date.now()})`;
-    });
+        await withTimeout(
+          tx.sql`INSERT INTO _migrations (id, applied_at) VALUES (${migration.id}, ${Date.now()})`,
+          `migration ${migration.id} record`
+        );
+      }),
+      `migration ${migration.id} transaction`
+    );
   }
 }
