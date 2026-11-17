@@ -4,8 +4,7 @@ import {
   recipeItems as recipeItemsTable,
   productPackaging as productPackagingTable,
   ingredients as ingredientsTable,
-  packagingSets as packagingSetsTable,
-  packagingSetItems as packagingSetItemsTable,
+  packaging as packagingTable,
 } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import type { Unit } from '../types';
@@ -21,7 +20,7 @@ export interface ProductInput {
   vat_pct: number;
   selling_price: number | null;
   recipe: { ingredient_id: number; qty: number }[];
-  packaging: { packaging_set_id: number; qty: number }[];
+  packaging: { packaging_id: number; qty: number }[];
 }
 
 type RecipeItemRow = typeof recipeItemsTable.$inferSelect & {
@@ -30,12 +29,13 @@ type RecipeItemRow = typeof recipeItemsTable.$inferSelect & {
 };
 
 type ProductPackagingRow = typeof productPackagingTable.$inferSelect & {
-  packaging_set_name: string;
+  packaging_name: string;
+  unit: Unit;
 };
 
 export const productRepository = {
   async getAll() {
-    const [products, items, packagingLines, allIngredients, allSets] =
+    const [products, items, packagingLines, allIngredients, allPackaging] =
       await Promise.all([
         db
           .select()
@@ -44,18 +44,11 @@ export const productRepository = {
         db.select().from(recipeItemsTable).orderBy(recipeItemsTable.id),
         db.select().from(productPackagingTable).orderBy(productPackagingTable.id),
         db.select().from(ingredientsTable),
-        db.select().from(packagingSetsTable),
+        db.select().from(packagingTable),
       ]);
 
-    const setItems = await db.select().from(packagingSetItemsTable).orderBy(packagingSetItemsTable.sort_order);
-
     const ingredientById = new Map(allIngredients.map((i) => [i.id, i]));
-    const setById = new Map(allSets.map((s) => [s.id, s]));
-    const itemsBySet = new Map<number, typeof setItems[number][]>();
-    for (const item of setItems) {
-      if (!itemsBySet.has(item.set_id)) itemsBySet.set(item.set_id, []);
-      itemsBySet.get(item.set_id)!.push(item);
-    }
+    const packagingById = new Map(allPackaging.map((p) => [p.id, p]));
 
     const byProduct = new Map<number, RecipeItemRow[]>();
     for (const item of items) {
@@ -71,10 +64,11 @@ export const productRepository = {
 
     const packagingByProduct = new Map<number, ProductPackagingRow[]>();
     for (const line of packagingLines) {
-      const set = setById.get(line.packaging_set_id);
+      const material = packagingById.get(line.packaging_id);
       const enriched: ProductPackagingRow = {
         ...line,
-        packaging_set_name: set?.name ?? '',
+        packaging_name: material?.name ?? '',
+        unit: (material?.unit ?? 'pcs') as Unit,
       };
       if (!packagingByProduct.has(line.product_id))
         packagingByProduct.set(line.product_id, []);
@@ -85,7 +79,6 @@ export const productRepository = {
       ...p,
       recipe: byProduct.get(p.id) || [],
       packaging: packagingByProduct.get(p.id) || [],
-      _packagingSetItems: itemsBySet,
     }));
   },
 
@@ -116,7 +109,7 @@ export const productRepository = {
     for (const line of pkgs) {
       await db.insert(productPackagingTable).values({
         product_id: productId,
-        packaging_set_id: line.packaging_set_id,
+        packaging_id: line.packaging_id,
         qty: line.qty,
       });
     }
@@ -138,7 +131,7 @@ export const productRepository = {
     for (const line of pkgs) {
       await db.insert(productPackagingTable).values({
         product_id: id,
-        packaging_set_id: line.packaging_set_id,
+        packaging_id: line.packaging_id,
         qty: line.qty,
       });
     }

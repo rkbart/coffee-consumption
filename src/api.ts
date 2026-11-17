@@ -5,10 +5,6 @@ import {
   packagingRepository,
 } from './repositories/packaging-repository';
 import {
-  packagingSetRepository,
-  packagingSetItemRepository,
-} from './repositories/packaging-set-repository';
-import {
   productRepository,
   type ProductInput,
 } from './repositories/product-repository';
@@ -37,8 +33,6 @@ import type {
   EndingReport,
   Ingredient,
   PackagingMaterial,
-  PackagingSet,
-  PackagingSetItem,
   Product,
   SaleEntry,
   ShiftId,
@@ -57,9 +51,11 @@ export interface IngredientInput {
 
 export interface PackagingInput {
   name: string;
+  description: string;
   unit: 'g' | 'ml' | 'pcs';
   pack_price: number;
   pack_size: number;
+  qty_needed: number;
   waste_pct: number;
 }
 
@@ -109,36 +105,6 @@ export const api = {
     packagingRepository.update(id, body).then((rows) => rows[0] as PackagingMaterial),
 
   deletePackaging: (id: number) => packagingRepository.delete(id),
-
-  packagingSets: () =>
-    packagingSetRepository.getAll() as Promise<PackagingSet[]>,
-
-  createPackagingSet: (body: { name: string; description?: string; sort_order?: number }) =>
-    packagingSetRepository.create(body).then((row) => row as PackagingSet),
-
-  updatePackagingSet: (id: number, body: { name?: string; description?: string; sort_order?: number }) =>
-    packagingSetRepository.update(id, body).then((rows) => rows[0] as PackagingSet),
-
-  deletePackagingSet: (id: number) => packagingSetRepository.delete(id),
-
-  createPackagingSetItem: (body: {
-    set_id: number;
-    packaging_id: number;
-    qty_needed: number;
-    notes: string;
-    sort_order: number;
-  }) =>
-    packagingSetItemRepository.create(body).then((row) => row as PackagingSetItem),
-
-  updatePackagingSetItem: (id: number, body: {
-    packaging_id?: number;
-    qty_needed?: number;
-    notes?: string;
-    sort_order?: number;
-  }) =>
-    packagingSetItemRepository.update(id, body).then((rows) => rows[0] as PackagingSetItem),
-
-  deletePackagingSetItem: (id: number) => packagingSetItemRepository.delete(id),
 
   products: () => productRepository.getAll() as Promise<Product[]>,
 

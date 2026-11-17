@@ -3,8 +3,6 @@ import { settings } from '../schema';
 import {
   ingredients as ingredientsTable,
   packaging as packagingTable,
-  packagingSets as packagingSetsTable,
-  packagingSetItems as packagingSetItemsTable,
   products as productsTable,
   closings as closingsTable,
 } from '../schema';
@@ -40,27 +38,20 @@ export async function resetDatabase(): Promise<void> {
 export interface DataCounts {
   ingredients: number;
   packaging: number;
-  packaging_sets: number;
-  packaging_set_items: number;
   products: number;
   closings: number;
 }
 
 async function dataCounts(): Promise<DataCounts> {
-  const [ingredients, packaging, packagingSets, packagingSetItems, products, closings] =
-    await Promise.all([
-      db.select().from(ingredientsTable),
-      db.select().from(packagingTable),
-      db.select().from(packagingSetsTable),
-      db.select().from(packagingSetItemsTable),
-      db.select().from(productsTable),
-      db.select().from(closingsTable),
-    ]);
+  const [ingredients, packaging, products, closings] = await Promise.all([
+    db.select().from(ingredientsTable),
+    db.select().from(packagingTable),
+    db.select().from(productsTable),
+    db.select().from(closingsTable),
+  ]);
   return {
     ingredients: ingredients.length,
     packaging: packaging.length,
-    packaging_sets: packagingSets.length,
-    packaging_set_items: packagingSetItems.length,
     products: products.length,
     closings: closings.length,
   };

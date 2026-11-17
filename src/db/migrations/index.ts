@@ -29,31 +29,13 @@ CREATE TABLE IF NOT EXISTS ingredients (
 CREATE TABLE IF NOT EXISTS packaging (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   name        TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
   unit        TEXT NOT NULL DEFAULT 'pcs',
   pack_price  REAL NOT NULL DEFAULT 0,
   pack_size   REAL NOT NULL DEFAULT 1,
+  qty_needed  REAL NOT NULL DEFAULT 1,
   waste_pct   REAL NOT NULL DEFAULT 0,
   sort_order  INTEGER NOT NULL DEFAULT 0
-);
-
---> statement-breakpoint
-
-CREATE TABLE IF NOT EXISTS packaging_sets (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  name          TEXT NOT NULL,
-  description   TEXT NOT NULL DEFAULT '',
-  sort_order    INTEGER NOT NULL DEFAULT 0
-);
-
---> statement-breakpoint
-
-CREATE TABLE IF NOT EXISTS packaging_set_items (
-  id           INTEGER PRIMARY KEY AUTOINCREMENT,
-  set_id       INTEGER NOT NULL REFERENCES packaging_sets(id) ON DELETE CASCADE,
-  packaging_id INTEGER NOT NULL REFERENCES packaging(id) ON DELETE RESTRICT,
-  qty_needed   REAL NOT NULL DEFAULT 1,
-  notes        TEXT NOT NULL DEFAULT '',
-  sort_order   INTEGER NOT NULL DEFAULT 0
 );
 
 --> statement-breakpoint
@@ -88,10 +70,10 @@ CREATE INDEX IF NOT EXISTS idx_recipe_product ON recipe_items(product_id);
 --> statement-breakpoint
 
 CREATE TABLE IF NOT EXISTS product_packaging (
-  id             INTEGER PRIMARY KEY AUTOINCREMENT,
-  product_id     INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-  packaging_set_id INTEGER NOT NULL REFERENCES packaging_sets(id) ON DELETE CASCADE,
-  qty            REAL NOT NULL DEFAULT 1
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  product_id   INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  packaging_id INTEGER NOT NULL REFERENCES packaging(id) ON DELETE RESTRICT,
+  qty          REAL NOT NULL DEFAULT 1
 );
 
 --> statement-breakpoint
