@@ -133,8 +133,26 @@ export default function App({ dbReady }: { dbReady: Promise<void> }) {
             </Routes>
           )
         ) : (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: "system-ui, sans-serif" }}>
-            <p>Opening database…</p>
+          <div className="skeleton-layout">
+            <div className="skeleton-main">
+              <div className="skeleton-title" />
+              <div className="skeleton-hero" />
+              <div className="skeleton-metrics">
+                <div className="skeleton-metric" />
+                <div className="skeleton-metric" />
+                <div className="skeleton-metric" />
+              </div>
+              <div className="skeleton-list">
+                <div className="skeleton-item" />
+                <div className="skeleton-item" />
+                <div className="skeleton-item" />
+              </div>
+            </div>
+            <div className="skeleton-aside">
+              <div className="skeleton-aside-card" />
+              <div className="skeleton-aside-card" />
+              <div className="skeleton-aside-card" />
+            </div>
           </div>
         )}
       </main>
