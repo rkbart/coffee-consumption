@@ -6,7 +6,7 @@ import "./styles.css";
 import { migrationsReady } from "./db/client";
 import { seed } from "./db/seed";
 
-const BOOT_TIMEOUT_MS = 10_000;
+const BOOT_TIMEOUT_MS = 60_000;
 
 const boot = () => migrationsReady.then(() => seed());
 const timeout = new Promise<never>((_, reject) =>
@@ -25,6 +25,13 @@ Promise.race([boot(), timeout])
     );
   })
   .catch((err) => {
+    const msg = (err as Error).message;
     console.error("Failed to initialize database:", err);
-    document.getElementById("root")!.innerHTML = `<p style="color:red">Something went wrong setting up the app: ${(err as Error).message}</p>`;
+    const isolated = typeof crossOriginIsolated !== "undefined" ? crossOriginIsolated : "unknown";
+    document.getElementById("root")!.innerHTML = `
+      <p style="color:red; padding:1rem; font-family: system-ui, sans-serif;">
+        Something went wrong setting up the app: ${msg}<br/>
+        <small>Cross-origin isolated: ${isolated}</small>
+      </p>
+    `;
   });

@@ -4,9 +4,9 @@ import * as schema from './schema';
 import { runMigrations } from './migrate';
 
 /**
- * One OPFS-backed SQLite database per origin (one browser, one profile — no
- * users, no auth). sqlocal runs the engine in a Web Worker and persists to
- * the Origin Private File System.
+ * One SQLite database per origin (one browser, one profile — no users, no
+ * auth). sqlocal runs the engine in a Web Worker and persists to the
+ * Origin Private File System (OPFS).
  *
  * `db` is the Drizzle instance used by repositories.
  * `sqlocalClient` is the raw client, exposed for file-level ops (reset).
