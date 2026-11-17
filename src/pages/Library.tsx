@@ -42,6 +42,7 @@ export default function Library() {
   const [packagingModal, setPackagingModal] = useState<PackagingMaterial | "new" | null>(
     null,
   );
+  const [expandedPackagingId, setExpandedPackagingId] = useState<number | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PackagingMaterial | null>(null);
   const [toast, setToast] = useState("");
 
@@ -271,87 +272,94 @@ export default function Library() {
               <>
                 <div className="packaging-list">
                   {pagedPackaging.map((material) => {
-                    const unitCost = packagingUnitCost(material);
                     const totalCost = packagingTotalCost(material);
+                    const isExpanded = expandedPackagingId === material.id;
                     return (
                       <article
                         key={material.id}
-                        className="packaging-card"
-                        data-id={material.id}
+                        className={`packaging-card${isExpanded ? " expanded" : ""}`}
+                        onClick={() => {
+                          if (isExpanded) setExpandedPackagingId(null);
+                          else setExpandedPackagingId(material.id);
+                        }}
                       >
                         <div className="packaging-card-main">
-                          <div className="packaging-card-head">
-                            <button
-                              type="button"
-                              className="packaging-name-link"
-                              onClick={() => setPackagingModal(material)}
-                            >
-                              <span className="ingredient-name">{material.name}</span>
-                            </button>
+                          <button
+                            type="button"
+                            className="packaging-name-link"
+                            aria-expanded={isExpanded}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isExpanded) setExpandedPackagingId(null);
+                              else setExpandedPackagingId(material.id);
+                            }}
+                          >
+                            <span className="ingredient-name">{material.name}</span>
                             <span className="unit-badge">
                               {unitLabel(material.unit)}
                             </span>
-                          </div>
-                          {material.description && (
-                            <p className="packaging-card-desc muted small">
-                              {material.description}
-                            </p>
-                          )}
-                          <div className="packaging-card-meta">
-                            <span className="meta-item">
-                              <span className="meta-label">Pack price</span>
-                              <span className="meta-value">
-                                {material.pack_price > 0
-                                  ? money(material.pack_price)
-                                  : "—"}
-                              </span>
-                            </span>
-                            <span className="meta-item">
-                              <span className="meta-label">Price / unit</span>
-                              <span className="meta-value">
-                                {unitCost !== null
-                                  ? unitMoney(unitCost)
-                                  : "—"}
-                              </span>
-                            </span>
-                            <span className="meta-item">
-                              <span className="meta-label">Qty / drink</span>
-                              <span className="meta-value">
-                                {fmt(material.qty_needed)}
-                              </span>
-                            </span>
-                            <span className="meta-item cost-amount">
-                              <span className="meta-label">Cost / drink</span>
-                              <span className="meta-value">
-                                {totalCost !== null ? money(totalCost) : "—"}
-                              </span>
-                            </span>
-                          </div>
-                        </div>
-                        <div className="packaging-card-actions">
-                          <button
-                            type="button"
-                            className="icon-btn"
-                            aria-label={`Edit ${material.name}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPackagingModal(material);
-                            }}
-                          >
-                            <IconEdit size={15} />
                           </button>
-                          <button
-                            type="button"
-                            className="icon-btn danger"
-                            aria-label={`Delete ${material.name}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPendingDelete(material);
-                            }}
-                          >
-                            <IconTrash size={15} />
-                          </button>
+                          <span className="card-total-cost">
+                            {totalCost !== null ? money(totalCost) : "—"}
+                          </span>
                         </div>
+                        {isExpanded && (
+                          <div className="packaging-card-details">
+                            {material.description && (
+                              <p className="packaging-card-desc muted small">
+                                {material.description}
+                              </p>
+                            )}
+                            <div className="packaging-card-meta">
+                              <span className="meta-item">
+                                <span className="meta-label">Pack price</span>
+                                <span className="meta-value">
+                                  {material.pack_price > 0
+                                    ? money(material.pack_price)
+                                    : "—"}
+                                </span>
+                              </span>
+                              <span className="meta-item">
+                                <span className="meta-label">Qty / drink</span>
+                                <span className="meta-value">
+                                  {fmt(material.qty_needed)}
+                                </span>
+                              </span>
+                              <span className="meta-item cost-amount">
+                                <span className="meta-label">Cost / drink</span>
+                                <span className="meta-value">
+                                  {totalCost !== null ? money(totalCost) : "—"}
+                                </span>
+                              </span>
+                            </div>
+                            <div className="packaging-card-actions">
+                              <button
+                                type="button"
+                                className="icon-btn"
+                                aria-label={`Edit ${material.name}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPackagingModal(material);
+                                  setExpandedPackagingId(null);
+                                }}
+                              >
+                                <IconEdit size={15} />
+                              </button>
+                              <button
+                                type="button"
+                                className="icon-btn danger"
+                                aria-label={`Delete ${material.name}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPendingDelete(material);
+                                  setExpandedPackagingId(null);
+                                }}
+                              >
+                                <IconTrash size={15} />
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </article>
                     );
                   })}
