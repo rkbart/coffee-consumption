@@ -37,12 +37,33 @@ export interface PackagingMaterial {
   sort_order: number;
 }
 
-export interface ProductPackaging {
+export interface PackagingSet {
   id: number;
-  product_id: number;
+  name: string;
+  description: string;
+  sort_order: number;
+  items: PackagingSetItem[];
+}
+
+export interface PackagingSetItem {
+  id: number;
+  set_id: number;
   packaging_id: number;
   packaging_name: string;
   unit: Unit;
+  pack_price: number;
+  pack_size: number;
+  waste_pct: number;
+  qty_needed: number;
+  notes: string;
+  sort_order: number;
+}
+
+export interface ProductPackaging {
+  id: number;
+  product_id: number;
+  packaging_set_id: number;
+  packaging_set_name: string;
   qty: number;
 }
 
@@ -145,6 +166,8 @@ export interface ShopSettings {
 export interface DataCounts {
   ingredients: number;
   packaging: number;
+  packaging_sets: number;
+  packaging_set_items: number;
   products: number;
   closings: number;
 }
