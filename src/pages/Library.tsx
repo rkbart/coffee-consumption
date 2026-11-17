@@ -300,7 +300,7 @@ export default function Library() {
                           else setExpandedPackagingId(material.id);
                         }}
                       >
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
                           <button
                             type="button"
                             className="flex items-center gap-2 text-left font-medium text-ink hover:underline hover:text-accent-dark"
@@ -373,7 +373,7 @@ export default function Library() {
                     );
                   })}
                 </div>
-                <div className="mt-4 pt-3 border-t border-line flex items-center justify-between">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
                   <span className="text-sm font-medium text-ink-soft">Total packaging cost per drink:</span>
                   <span className="text-sm font-bold text-accent-dark">
                     {money(

@@ -338,7 +338,7 @@ export default function History() {
             : ""}{" "}
           will no longer appear in your history.
         </p>
-        <div className="flex justify-end gap-2 pt-3 border-t border-line">
+        <div className="flex flex-wrap justify-end gap-2 border-t border-line pt-3">
           <button
             type="button"
             className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors"

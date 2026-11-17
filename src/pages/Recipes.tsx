@@ -277,7 +277,7 @@ export default function Recipes() {
           {pendingDelete?.size_label ? `· ${pendingDelete.size_label}` : ""} will be
           removed from the menu and from future counts.
         </p>
-        <div className="mt-4 flex justify-end gap-2">
+        <div className="mt-4 flex flex-wrap justify-end gap-2">
           <button
             className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
             onClick={() => setPendingDelete(null)}
@@ -487,7 +487,7 @@ function RecipeCard({
         </div>
       </div>
 
-      <div className="pt-3 border-t border-line flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
         <div className="flex flex-col gap-0.5">
           <span className="text-xs text-muted uppercase tracking-wider text-[10px]">Menu price</span>
           <span className="text-sm font-bold text-ink">
@@ -985,7 +985,7 @@ function BeverageModal({
 
         {error && <p className="text-sm text-red">{error}</p>}
 
-        <div className="flex justify-end gap-2 pt-3 border-t border-line">
+        <div className="flex flex-wrap justify-end gap-2 border-t border-line pt-3">
           <button
             type="button"
             className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"

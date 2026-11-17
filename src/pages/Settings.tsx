@@ -231,15 +231,15 @@ export default function Settings() {
               and your settings. Importing replaces everything currently in this
               database.
             </p>
-            <div className="px-4 pb-4 flex gap-2">
+              <div className="px-4 pb-4 flex flex-wrap gap-2">
               <button
                 type="button"
-                className="bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors inline-flex items-center gap-2"
+                className="max-w-full bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors inline-flex items-center gap-2"
                 onClick={exportBackup}
               >
                 <IconDownload size={16} /> Export backup
               </button>
-              <label className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors inline-flex items-center gap-2 cursor-pointer">
+              <label className="max-w-full bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors inline-flex items-center gap-2 cursor-pointer">
                 <IconUpload size={16} /> Import backup
                 <input
                   type="file"
@@ -265,7 +265,7 @@ export default function Settings() {
               New databases start empty. Load the sample café if you want to explore
               the app first: four ingredients, eight drinks and three shift closings.
             </p>
-            <div className="px-4 pb-4 flex gap-2">
+            <div className="px-4 pb-4 flex flex-wrap gap-2">
               <button
                 type="button"
                 className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors disabled:opacity-50 disabled:pointer-events-none"
@@ -297,7 +297,7 @@ export default function Settings() {
                 · {counts.closings} closings
               </p>
             )}
-            <div className="px-4 pb-4 flex gap-2">
+            <div className="px-4 pb-4 flex flex-wrap gap-2">
               <button
                 type="button"
                 className="bg-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-dark transition-colors disabled:opacity-50 disabled:pointer-events-none"
@@ -359,7 +359,7 @@ export default function Settings() {
           </>
         )}
 
-        <div className="flex justify-end gap-2 pt-3 border-t border-line">
+        <div className="flex flex-wrap justify-end gap-2 border-t border-line pt-3">
           <button
             type="button"
             className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors disabled:opacity-50 disabled:pointer-events-none"

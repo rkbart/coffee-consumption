@@ -77,6 +77,12 @@ export const IconClose = ({ size, className }: IconProps) => (
   </svg>
 );
 
+export const IconMenu = ({ size, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M4 6h16M4 12h16M4 18h16" />
+  </svg>
+);
+
 export const IconArrowLeft = ({ size, className }: IconProps) => (
   <svg {...base(size)} className={className}>
     <path d="M19 12H5m6-7-7 7 7 7" />

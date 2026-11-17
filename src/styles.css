@@ -96,9 +96,52 @@ body.modal-open .app-main {
   overflow: hidden;
 }
 
+body.mobile-nav-open .app-main {
+  overflow: hidden;
+}
+
 .modal-body form input:not([type="checkbox"]):not([type="radio"]),
 .modal-body form select,
 .modal-body form textarea {
   max-width: 100%;
   min-width: 0;
+}
+
+@media (max-width: 639px) {
+  .app-main button {
+    min-height: 44px;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.3;
+  }
+
+  .app-main :is(article, section, aside, .grid > *) {
+    min-width: 0;
+  }
+
+  .app-main :is(h1, h2, h3) {
+    overflow-wrap: anywhere;
+  }
+
+  .app-main :is(.p-5, .p-6) {
+    padding: 1rem;
+  }
+
+  .app-main :is(.px-5, .px-6) {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .modal-body label + input:not([type="checkbox"]):not([type="radio"]),
+  .modal-body label + select {
+    display: block;
+    width: 100%;
+  }
+
+  .modal-body form input:not([type="checkbox"]):not([type="radio"]),
+  .modal-body form select,
+  .modal-body form textarea {
+    max-width: 100%;
+  }
 }

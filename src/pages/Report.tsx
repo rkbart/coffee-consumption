@@ -346,7 +346,7 @@ export default function Report() {
               </div>
 
               <section className="border-t border-line px-4 py-4 sm:px-6">
-                <div className="flex items-start justify-between mb-3">
+                <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <h3 className="text-lg font-serif font-medium text-ink">Stock movement &amp; variance</h3>
                     <p className="mt-0.5 text-xs text-muted">
@@ -425,7 +425,7 @@ export default function Report() {
               </section>
 
               <section className="border-t border-line px-4 py-4 sm:px-6">
-                <div className="flex items-start justify-between mb-3">
+                <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <h3 className="text-lg font-serif font-medium text-ink">Shift closes</h3>
                     <p className="mt-0.5 text-xs text-muted">
@@ -474,7 +474,7 @@ export default function Report() {
 
               <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:grid-cols-2">
                 <section className="border-t border-line px-0 py-4">
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <h3 className="text-lg font-serif font-medium text-ink">Drinks sold</h3>
                       <p className="mt-0.5 text-xs text-muted">
@@ -512,7 +512,7 @@ export default function Report() {
                 </section>
 
                 <section className="border-t border-line px-0 py-4">
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <h3 className="text-lg font-serif font-medium text-ink">Shift notes</h3>
                       <p className="mt-0.5 text-xs text-muted">

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Route, Routes } from "react-router-dom";
+import { NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { Skeleton } from "boneyard-js/react";
 import { settingsRepository } from "./repositories/settings-repository";
 import { getCurrencySymbol, setCurrencySymbol } from "./lib";
@@ -17,9 +17,11 @@ import {
   IconHistory,
   IconInventory,
   IconLibrary,
+  IconMenu,
   IconRecipes,
   IconReport,
   IconSettings,
+  IconClose,
 } from "./components/Icons";
 
 const links = [
@@ -36,6 +38,23 @@ export default function App({ dbReady }: { dbReady: Promise<void> }) {
   const [currency, setCurrency] = useState(getCurrencySymbol());
   const [dbLoaded, setDbLoaded] = useState(false);
   const [dbError, setDbError] = useState<string | null>(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileNavOpen(false);
+    };
+    document.body.classList.add("mobile-nav-open");
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.classList.remove("mobile-nav-open");
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [mobileNavOpen]);
+
+  useEffect(() => setMobileNavOpen(false), [location.pathname]);
 
   useEffect(() => {
     const syncCurrency = (event: Event) => {
@@ -67,8 +86,14 @@ export default function App({ dbReady }: { dbReady: Promise<void> }) {
 
   return (
     <div className="app-shell flex h-screen h-[100dvh] overflow-hidden bg-bg text-ink" data-currency={currency}>
-      <aside className="hidden md:flex w-64 shrink-0 bg-surface border-r border-line flex-col print:hidden">
-        <div className="flex items-center gap-2 p-5">
+      <aside
+        id="mobile-navigation"
+        className={`fixed inset-y-0 left-0 z-40 flex w-72 max-w-[calc(100vw-3rem)] flex-col overflow-y-auto border-r border-line bg-surface transition-transform duration-200 md:visible md:static md:z-auto md:w-64 md:max-w-none md:translate-x-0 md:shadow-none print:hidden ${
+          mobileNavOpen ? "visible translate-x-0 shadow-xl" : "invisible -translate-x-full"
+        }`}
+        aria-label="Main navigation"
+      >
+        <div className="flex items-center gap-2 p-4 sm:p-5">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-dark">
             <IconCoffee size={21} />
           </span>
@@ -76,6 +101,14 @@ export default function App({ dbReady }: { dbReady: Promise<void> }) {
             <strong className="block text-lg font-serif leading-tight text-ink">Brew Ledger</strong>
             <small className="block text-muted">Inventory variance</small>
           </span>
+          <button
+            type="button"
+            className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-surface-2 hover:text-ink md:hidden"
+            onClick={() => setMobileNavOpen(false)}
+            aria-label="Close navigation"
+          >
+            <IconClose size={19} />
+          </button>
         </div>
 
         <nav className="flex-1 px-3 py-2 nav" aria-label="Main">
@@ -84,8 +117,9 @@ export default function App({ dbReady }: { dbReady: Promise<void> }) {
               key={to}
               to={to}
               end={end}
+              onClick={() => setMobileNavOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                `flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   isActive
                     ? "bg-accent-soft text-accent-dark"
                     : "text-ink-soft hover:bg-surface-2 hover:text-ink"
@@ -112,9 +146,19 @@ export default function App({ dbReady }: { dbReady: Promise<void> }) {
         </div>
       </aside>
 
+      <button
+        type="button"
+        className={`fixed inset-0 z-30 bg-ink/40 transition-opacity md:hidden print:hidden ${
+          mobileNavOpen ? "visible opacity-100" : "invisible opacity-0"
+        }`}
+        onClick={() => setMobileNavOpen(false)}
+        aria-label="Close navigation menu"
+        tabIndex={mobileNavOpen ? 0 : -1}
+      />
+
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="shrink-0 border-b border-line bg-surface md:hidden print:hidden">
-          <div className="flex items-center gap-2 px-4 py-3">
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-line bg-surface px-4 py-2.5 md:hidden print:hidden">
+          <div className="flex min-w-0 items-center gap-2">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-dark">
               <IconCoffee size={20} />
             </span>
@@ -123,25 +167,16 @@ export default function App({ dbReady }: { dbReady: Promise<void> }) {
               <small className="block text-muted">Inventory variance</small>
             </span>
           </div>
-          <nav className="flex gap-1 overflow-x-auto px-3 pb-2" aria-label="Main navigation">
-            {links.map(({ to, label, icon: Icon, end }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                className={({ isActive }) =>
-                  `flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-accent-soft text-accent-dark"
-                      : "text-ink-soft hover:bg-surface-2 hover:text-ink"
-                  }`
-                }
-              >
-                <Icon size={17} className="shrink-0" />
-                <span>{label}</span>
-              </NavLink>
-            ))}
-          </nav>
+          <button
+            type="button"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-ink hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-accent"
+            onClick={() => setMobileNavOpen(true)}
+            aria-label="Open navigation"
+            aria-expanded={mobileNavOpen}
+            aria-controls="mobile-navigation"
+          >
+            <IconMenu size={21} />
+          </button>
         </header>
 
         <main id="app-main" className="app-main min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-bg">
