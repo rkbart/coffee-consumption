@@ -6,7 +6,7 @@ import "./styles.css";
 import { migrationsReady } from "./db/client";
 import { seed } from "./db/seed";
 
-const BOOT_TIMEOUT_MS = 60_000;
+const BOOT_TIMEOUT_MS = 30_000;
 
 const boot = () => migrationsReady.then(() => seed());
 const timeout = new Promise<never>((_, reject) =>

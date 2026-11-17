@@ -10,7 +10,7 @@ function splitStatements(sql: string): string[] {
 
 async function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
   const timeout = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error(`DB step timed out: ${label}`)), 15_000)
+    setTimeout(() => reject(new Error(`DB step timed out: ${label}`)), 3000)
   );
   return Promise.race([promise, timeout]);
 }
