@@ -31,8 +31,10 @@ const links = [
   { to: "/settings", label: "Settings", icon: IconSettings },
 ];
 
-export default function App() {
+export default function App({ dbReady }: { dbReady: Promise<void> }) {
   const [currency, setCurrency] = useState(getCurrencySymbol());
+  const [dbLoaded, setDbLoaded] = useState(false);
+  const [dbError, setDbError] = useState<string | null>(null);
 
   useEffect(() => {
     const syncCurrency = (event: Event) => {
@@ -50,6 +52,33 @@ export default function App() {
       });
     return () => window.removeEventListener("brew-currency", syncCurrency);
   }, []);
+
+  useEffect(() => {
+    dbReady
+      .then(() => {
+        setDbLoaded(true);
+      })
+      .catch((err) => {
+        setDbError((err as Error).message);
+        setDbLoaded(true);
+      });
+  }, [dbReady]);
+
+  if (!dbLoaded) {
+    return (
+      <div className="app-shell" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: "system-ui, sans-serif" }}>
+        <p>Opening database…</p>
+      </div>
+    );
+  }
+
+  if (dbError) {
+    return (
+      <div className="app-shell" style={{ padding: "1rem", fontFamily: "system-ui, sans-serif", color: "red" }}>
+        <p>Something went wrong setting up the app: {dbError}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell" data-currency={currency}>
