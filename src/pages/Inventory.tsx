@@ -273,20 +273,27 @@ export default function Inventory() {
         title="Daily count"
         description="Enter what you opened with, what was delivered or wasted, and what is left. Compare it against the recipe and POS usage."
         actions={
-          <div className="date-switcher">
+          <div className="flex items-center gap-2">
             <button
-              className="icon-btn"
+              type="button"
+              className="p-1.5 hover:bg-surface-2 rounded-lg text-muted hover:text-accent transition-colors"
               aria-label="Previous day"
               onClick={() => setDate(shiftDate(date, -1))}
             >
               <IconArrowLeft size={17} />
             </button>
-            <label className="date-field">
-              <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
-              <span>{formatDate(date)}</span>
+            <label className="relative flex items-center gap-2">
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => e.target.value && setDate(e.target.value)}
+                className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
+              />
+              <span className="text-sm font-medium text-ink">{formatDate(date)}</span>
             </label>
             <button
-              className="icon-btn"
+              type="button"
+              className="p-1.5 hover:bg-surface-2 rounded-lg text-muted hover:text-accent transition-colors"
               aria-label="Next day"
               onClick={() => setDate(shiftDate(date, 1))}
             >
@@ -296,152 +303,169 @@ export default function Inventory() {
         }
       />
 
-      <section className="card shift-panel">
-        <div className="shift-panel-main">
-          <p className="mini-label">Shift</p>
-          <div className="shift-tabs" role="tablist" aria-label="Count shift">
-            {SHIFTS.map((option) => {
-              const saved = dayShifts.find((row) => row.shift === option.id);
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={shift === option.id}
-                  className={`shift-tab${shift === option.id ? " active" : ""}`}
-                  onClick={() => setShift(option.id)}
-                >
-                  <span className="shift-short">{option.short}</span>
-                  <span className="shift-copy">
-                    <strong>{option.label}</strong>
-                    <small>{option.time}</small>
-                  </span>
-                  {saved && (
-                    <span className="shift-saved" title={`Saved by ${saved.prepared_by || "unnamed"}`}>
-                      ✓
+      <section className="bg-surface border border-line rounded-lg p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Shift</p>
+            <div className="flex gap-1" role="tablist" aria-label="Count shift">
+              {SHIFTS.map((option) => {
+                const saved = dayShifts.find((row) => row.shift === option.id);
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={shift === option.id}
+                    className={`px-3 py-2 rounded-lg font-medium transition-colors ${
+                      shift === option.id
+                        ? "bg-accent-soft text-accent-dark"
+                        : "text-ink-soft hover:bg-surface-2"
+                    }`}
+                    onClick={() => setShift(option.id)}
+                  >
+                    <span className="text-xs">{option.short}</span>
+                    <span className="flex flex-col text-left">
+                      <strong className="text-ink">{option.label}</strong>
+                      <span className="text-xs text-muted">{option.time}</span>
                     </span>
-                  )}
-                </button>
-              );
-            })}
+                    {saved && (
+                      <span className="ml-2 text-green" title={`Saved by ${saved.prepared_by || "unnamed"}`}>
+                        ✓
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
+          <label className="space-y-1">
+            <span className="text-xs font-semibold text-ink-soft uppercase tracking-wider block">Prepared by</span>
+            <input
+              value={preparedBy}
+              onChange={(event) => setPreparedBy(event.target.value)}
+              placeholder="Name or initials on this shift"
+              maxLength={80}
+              className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
+            />
+            <small className="text-xs text-muted">Shown beside this shift in history and reports.</small>
+          </label>
         </div>
-        <label className="field prepared-field">
-          <span>Prepared by</span>
-          <input
-            value={preparedBy}
-            onChange={(event) => setPreparedBy(event.target.value)}
-            placeholder="Name or initials on this shift"
-            maxLength={80}
-          />
-          <small className="field-hint">Shown beside this shift in history and reports.</small>
-        </label>
       </section>
 
-      {error && <div className="banner banner-error">{error}</div>}
+      {error && (
+        <div className="bg-red-soft border border-red rounded-lg p-3 flex items-center gap-2">
+          {error}
+        </div>
+      )}
       {carriedFrom && !savedClosing && (
-        <div className="banner banner-info">
+        <div className="bg-accent-soft border border-accent rounded-lg p-3 flex items-center gap-2">
           <IconSpark size={17} />
-          Opening stock carried over from the {formatDate(carriedFrom)}
-          {carriedShift ? ` ${shiftShort(carriedShift)}` : ""} close. Adjust it if the
-          shelf count disagreed.
+          <span>
+            Opening stock carried over from the {formatDate(carriedFrom)}
+            {carriedShift ? ` ${shiftShort(carriedShift)}` : ""} close. Adjust it if the
+            shelf count disagreed.
+          </span>
         </div>
       )}
       {savedClosing && (
-        <div className="banner banner-success">
+        <div className="bg-green-soft border border-green rounded-lg p-3 flex items-center gap-2">
           <IconCheck size={16} />
-          The {shiftLabel(shift)} count is closed. Any change you save replaces this
-          shift's snapshot.
+          <span>
+            The {shiftLabel(shift)} count is closed. Any change you save replaces this
+            shift's snapshot.
+          </span>
         </div>
       )}
 
       {loading ? (
-        <div className="card skeleton-card" />
+        <div className="bg-surface border border-line rounded-lg h-64 flex items-center justify-center" />
       ) : (
-        <div className="count-layout">
-          <section className="stack">
-            <div className="summary-strip">
-              <div className="summary-tile">
-                <span className="summary-icon coffee"><IconCoffee size={20} /></span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <section className="flex flex-col gap-4 lg:col-span-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              <div className="flex items-center gap-3 bg-surface-2 rounded-lg p-3">
+                <span className="w-8 h-8 rounded bg-green-soft text-green flex items-center justify-center"><IconCoffee size={20} /></span>
                 <div>
-                  <p className="mini-label">Coffee usage</p>
-                  <p className="summary-value numeric">
-                    {fmt(coffee.actual)} <small>g</small>
-                    <span className="summary-vs">actual</span>
+                  <p className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Coffee usage</p>
+                  <p className="text-lg font-serif font-medium text-ink">
+                    {fmt(coffee.actual)} <span className="text-[10px] text-muted">g</span>
+                    <span className="text-[10px] text-muted ml-1">actual</span>
                   </p>
-                  <p className="summary-sub">
+                  <p className="text-xs text-muted">
                     Theory {fmt(coffee.theoretical)} g ·{" "}
-                    <span className={coffee.variance === 0 ? "" : coffee.variance > 0 ? "text-over" : "text-under"}>
+                    <span className={coffee.variance === 0 ? "" : coffee.variance > 0 ? "text-red" : "text-green"}>
                       {fmtSigned(coffee.variance)} g
                     </span>
                   </p>
                 </div>
               </div>
-              <div className="summary-tile">
-                <span className="summary-icon milk"><IconMilk size={20} /></span>
+              <div className="flex items-center gap-3 bg-surface-2 rounded-lg p-3">
+                <span className="w-8 h-8 rounded bg-accent-dark/10 text-accent-dark flex items-center justify-center"><IconMilk size={20} /></span>
                 <div>
-                  <p className="mini-label">Milk usage</p>
-                  <p className="summary-value numeric">
-                    {fmt(milk.actual)} <small>ml</small>
-                    <span className="summary-vs">actual</span>
+                  <p className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Milk usage</p>
+                  <p className="text-lg font-serif font-medium text-ink">
+                    {fmt(milk.actual)} <span className="text-[10px] text-muted">ml</span>
+                    <span className="text-[10px] text-muted ml-1">actual</span>
                   </p>
-                  <p className="summary-sub">
+                  <p className="text-xs text-muted">
                     Theory {fmt(milk.theoretical)} ml ·{" "}
-                    <span className={milk.variance === 0 ? "" : milk.variance > 0 ? "text-over" : "text-under"}>
+                    <span className={milk.variance === 0 ? "" : milk.variance > 0 ? "text-red" : "text-green"}>
                       {fmtSigned(milk.variance)} ml
                     </span>
                   </p>
                 </div>
               </div>
-              <div className="summary-tile">
-                <span className="summary-icon neutral"><IconCheck size={20} /></span>
+              <div className="flex items-center gap-3 bg-surface-2 rounded-lg p-3">
+                <span className="w-8 h-8 rounded bg-line/50 text-ink-soft flex items-center justify-center"><IconCheck size={20} /></span>
                 <div>
-                  <p className="mini-label">Drinks logged</p>
-                  <p className="summary-value numeric">
-                    {fmt(totalDrinks)} <small>cups</small>
+                  <p className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Drinks logged</p>
+                  <p className="text-lg font-serif font-medium text-ink">
+                    {fmt(totalDrinks)} <span className="text-[10px] text-muted">cups</span>
                   </p>
-                  <p className="summary-sub">{products.length} beverages on the menu</p>
+                  <p className="text-xs text-muted">{products.length} beverages on the menu</p>
                 </div>
               </div>
             </div>
 
-            <div className="card">
-              <div className="panel-head">
+            <div className="bg-surface border border-line rounded-lg overflow-hidden">
+              <div className="flex items-start justify-between mb-3 pb-2 border-b border-line px-5">
                 <div>
-                  <p className="eyebrow">Inventory</p>
-                  <h2>Count sheet · {shiftShort(shift)}</h2>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Inventory</p>
+                  <h2 className="text-lg font-serif font-medium text-ink">Count sheet · {shiftShort(shift)}</h2>
                 </div>
-                <span className="muted small">All weights in g · liquids in ml</span>
+                <span className="text-xs text-muted">All weights in g · liquids in ml</span>
               </div>
 
-              <div className="table-scroll">
-                <table className="data-table count-table">
+              <div className="overflow-x-auto px-5 pb-4">
+                <table className="w-full border-collapse text-sm">
                   <thead>
-                    <tr>
-                      <th>Ingredient</th>
-                      <th>Opening</th>
-                      <th>Deliveries</th>
-                      <th>Waste</th>
-                      <th>Closing</th>
-                      <th className="right">Actual use</th>
+                    <tr className="text-left border-b border-line">
+                      <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider">Ingredient</th>
+                      <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider text-right">Opening</th>
+                      <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider text-right">Deliveries</th>
+                      <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider text-right">Waste</th>
+                      <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider text-right">Closing</th>
+                      <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider text-right">Actual use</th>
                     </tr>
                   </thead>
                   <tbody>
                     {lines.map((line) => (
-                      <tr key={line.ingredient.id}>
-                        <td>
-                          <div className="ingredient-cell">
-                            <span className={`ingredient-dot ${line.ingredient.unit === "g" ? "coffee" : "milk"}`} />
+                      <tr key={line.ingredient.id} className="border-b border-line/50">
+                        <td className="pb-3">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`w-2 h-2 rounded-full ${line.ingredient.unit === "g" ? "bg-green" : "bg-accent-dark"}`}
+                            />
                             <div>
-                              <strong>{line.ingredient.name}</strong>
-                              <small>{unitLabel(line.ingredient.unit)}</small>
+                              <strong className="text-ink">{line.ingredient.name}</strong>
+                              <span className="ml-0.5 text-xs text-muted">{unitLabel(line.ingredient.unit)}</span>
                             </div>
                           </div>
                         </td>
                         {(["opening", "deliveries", "waste", "closing"] as const).map((field) => (
-                          <td key={field}>
+                          <td key={field} className="pb-3 text-right">
                             <input
-                              className="cell-input numeric"
+                              className="w-full bg-transparent border-none outline-none text-ink text-right focus:ring-0"
                               type="number"
                               min="0"
                               step="any"
@@ -452,9 +476,9 @@ export default function Inventory() {
                             />
                           </td>
                         ))}
-                        <td className="right">
-                          <span className="actual-value numeric">{fmt(line.actual)}</span>
-                          <span className="unit-inline">{unitLabel(line.ingredient.unit)}</span>
+                        <td className="pb-3 text-right">
+                          <span className="font-medium text-ink">{fmt(line.actual)}</span>
+                          <span className="ml-0.5 text-xs text-muted">{unitLabel(line.ingredient.unit)}</span>
                         </td>
                       </tr>
                     ))}
@@ -462,37 +486,40 @@ export default function Inventory() {
                 </table>
               </div>
 
-              <p className="formula-note">
+              <p className="px-5 pt-3 pb-6 text-xs text-muted">
                 Actual usage = opening + deliveries − waste − closing. The ending count is
                 the one to take at the last minute of the shift.
               </p>
             </div>
 
-            <div className="card">
-              <div className="panel-head">
+            <div className="bg-surface border border-line rounded-lg overflow-hidden">
+              <div className="flex items-start justify-between mb-3 pb-2 border-b border-line px-5">
                 <div>
-                  <p className="eyebrow">Till</p>
-                  <h2>Drinks sold this shift</h2>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Till</p>
+                  <h2 className="text-lg font-serif font-medium text-ink">Drinks sold this shift</h2>
                 </div>
-                <span className="count-chip">{totalDrinks} cups</span>
+                <span className="inline-block px-2 py-0.5 rounded-full bg-line/50 text-xs text-ink-soft">
+                  {totalDrinks} cups
+                </span>
               </div>
-              <p className="muted small panel-note">
+              <p className="px-5 pt-3 pb-2 text-xs text-muted">
                 Log cups that did not go through the POS too — comps, staff drinks,
                 remakes.
               </p>
 
-              <div className="list-toolbar sale-filter-row">
+              <div className="flex flex-wrap items-center gap-3 px-5 mb-4">
                 <SearchField
                   value={saleSearch}
                   onChange={setSaleSearch}
                   placeholder="Search drinks, groups or ingredients…"
                   label="Search drinks sold this shift"
                 />
-                <label className="menu-filter">
-                  <span>Menu group</span>
+                <label className="flex flex-col gap-1">
+                  <span className="text-xs font-semibold text-ink-soft uppercase tracking-wider block">Menu group</span>
                   <select
                     value={menuGroup}
                     onChange={(event) => setMenuGroup(event.target.value)}
+                    className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
                   >
                     <option value="all">All menu groups</option>
                     {menuGroups.map((group) => (
@@ -502,7 +529,7 @@ export default function Inventory() {
                     ))}
                   </select>
                 </label>
-                <span className="search-summary" aria-live="polite">
+                <span className="text-sm text-muted" aria-live="polite">
                   {saleQuery
                     ? `${visibleProducts.length} result${visibleProducts.length === 1 ? "" : "s"} for “${debouncedSaleSearch.trim()}”`
                     : menuGroup === "all"
@@ -512,8 +539,8 @@ export default function Inventory() {
               </div>
 
               {visibleProducts.length === 0 ? (
-                <div className="sales-empty">
-                  <p className="muted small">
+                <div className="px-5 py-8 text-center">
+                  <p className="text-xs text-muted">
                     {saleQuery
                       ? `No drinks match “${debouncedSaleSearch.trim()}”.`
                       : `No beverages are in ${menuGroup} yet.`}
@@ -521,7 +548,7 @@ export default function Inventory() {
                   {(saleQuery || menuGroup !== "all") && (
                     <button
                       type="button"
-                      className="btn btn-quiet btn-sm"
+                      className="mt-2 px-3 py-1.5 text-xs font-medium bg-surface border border-line rounded-lg text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors"
                       onClick={() => {
                         setSaleSearch("");
                         setMenuGroup("all");
@@ -533,35 +560,36 @@ export default function Inventory() {
                 </div>
               ) : (
                 <>
-                  <div className="sales-groups">
+                  <div className="px-5 space-y-3">
                     {Object.entries(productGroups).map(([category, items]) => (
-                      <div key={category} className="sales-group">
-                        <p className="mini-label">{category}</p>
+                      <div key={category}>
+                        <p className="text-xs font-semibold text-ink-soft uppercase tracking-wider mb-2">{category}</p>
                         {items.map((product) => (
-                          <div className="sale-row" key={product.id}>
-                            <div className="sale-name">
-                              <strong>{product.name}</strong>
-                              <small>{product.size_label || "—"}</small>
+                          <div className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-surface-2 transition-colors" key={product.id}>
+                            <div className="flex flex-col gap-0.5">
+                              <strong className="text-ink">{product.name}</strong>
+                              <span className="text-xs text-muted">{product.size_label || "—"}</span>
                             </div>
-                            <div className="sale-recipe">
+                            <div className="flex gap-1 flex-wrap text-xs text-muted">
                               {product.recipe.map((line) => (
                                 <span key={line.id}>
                                   {fmt(line.qty, 1)} {unitLabel(line.unit)} {line.ingredient_name.split(" ")[0]}
                                 </span>
                               ))}
                             </div>
-                            <div className="stepper">
+                            <div className="flex items-center gap-1">
                               <button
                                 type="button"
                                 onClick={() => stepSale(product.id, -1)}
                                 aria-label={`Decrease ${product.name}`}
+                                className="px-2 py-0.5 text-xs font-medium bg-surface border border-line rounded-lg text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors"
                               >
                                 −
                               </button>
                               <input
                                 type="number"
                                 min="0"
-                                className="numeric"
+                                className="w-12 bg-transparent border-none outline-none text-ink text-right focus:ring-0"
                                 placeholder="0"
                                 value={salesDrafts[product.id] ?? ""}
                                 onChange={(e) => setSale(product.id, e.target.value)}
@@ -571,6 +599,7 @@ export default function Inventory() {
                                 type="button"
                                 onClick={() => stepSale(product.id, 1)}
                                 aria-label={`Increase ${product.name}`}
+                                className="px-2 py-0.5 text-xs font-medium bg-surface border border-line rounded-lg text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors"
                               >
                                 +
                               </button>
@@ -593,36 +622,36 @@ export default function Inventory() {
             </div>
           </section>
 
-          <aside className="stack count-aside">
-            <div className="card variance-card">
-              <div className="panel-head">
+          <aside className="lg:col-span-4 flex flex-col gap-4">
+            <div className="bg-surface border border-line rounded-lg overflow-hidden">
+              <div className="flex items-start justify-between mb-3 pb-2 border-b border-line px-4">
                 <div>
-                  <p className="eyebrow">The reconciliation</p>
-                  <h2>Variance</h2>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">The reconciliation</p>
+                  <h2 className="text-lg font-serif font-medium text-ink">Variance</h2>
                 </div>
                 {flagged.length > 0 ? (
-                  <span className="pill pill-over">
-                    <span className="pill-dot" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-soft text-red text-xs font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
                     {flagged.length} flagged
                   </span>
                 ) : (
-                  <span className="pill pill-on-target">
-                    <span className="pill-dot" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-soft text-green text-xs font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
                     In balance
                   </span>
                 )}
               </div>
 
-              <div className="variance-list">
+              <div className="space-y-3 px-4 pb-4">
                 {lines.map((line) => {
                   const status = varianceStatus(line);
                   const width = line.theoretical
                     ? Math.min(100, (Math.abs(line.actual - line.theoretical) / Math.max(line.theoretical, 1)) * 100)
                     : 0;
                   return (
-                    <div className="variance-item" key={line.ingredient.id}>
-                      <div className="variance-item-head">
-                        <strong>{line.ingredient.name}</strong>
+                    <div className="p-3 bg-surface-2 rounded-lg" key={line.ingredient.id}>
+                      <div className="flex items-center justify-between">
+                        <strong className="text-ink">{line.ingredient.name}</strong>
                         <VariancePill
                           variance={line.variance}
                           theoretical={line.theoretical}
@@ -630,36 +659,36 @@ export default function Inventory() {
                           showValue={false}
                         />
                       </div>
-                      <div className="compare">
-                        <div className="compare-row">
-                          <span className="compare-label">Theory</span>
-                          <span className="compare-track">
+                      <div className="mt-2 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-ink-soft w-16">Theory</span>
+                          <span className="flex-1 h-1.5 bg-line/50 rounded-full overflow-hidden">
                             <span
-                              className="compare-fill theory"
+                              className="h-full bg-ink"
                               style={{ width: `${line.theoretical ? 100 : 0}%` }}
                             />
                           </span>
-                          <span className="compare-num numeric">
-                            {fmt(line.theoretical)} <small>{unitLabel(line.ingredient.unit)}</small>
+                          <span className="text-xs font-medium text-ink w-12 text-right">
+                            {fmt(line.theoretical)} <span className="text-xs text-muted ml-0.5">{unitLabel(line.ingredient.unit)}</span>
                           </span>
                         </div>
-                        <div className="compare-row">
-                          <span className="compare-label">Actual</span>
-                          <span className="compare-track">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-ink-soft w-16">Actual</span>
+                          <span className="flex-1 h-1.5 bg-line/50 rounded-full overflow-hidden">
                             <span
-                              className={`compare-fill ${status === "on-target" ? "target" : "actual"}`}
+                              className={`h-full ${status === "on-target" ? "bg-green" : "bg-accent-dark"}`}
                               style={{
                                 width: `${Math.min(100, Math.max(6, line.theoretical ? (line.actual / line.theoretical) * 100 : line.actual ? 100 : 0))}%`,
                               }}
                             />
                           </span>
-                          <span className="compare-num numeric">
-                            {fmt(line.actual)} <small>{unitLabel(line.ingredient.unit)}</small>
+                          <span className="text-xs font-medium text-ink w-12 text-right">
+                            {fmt(line.actual)} <span className="text-xs text-muted ml-0.5">{unitLabel(line.ingredient.unit)}</span>
                           </span>
                         </div>
                       </div>
                       {status !== "on-target" && (
-                        <p className={`variance-note ${status}`}>
+                        <p className={`mt-2 text-xs ${status === "over" ? "text-red" : "text-green"}`}>
                           {status === "over"
                             ? `${fmt(Math.abs(line.variance))} ${unitLabel(line.ingredient.unit)} more left the shelf than the recipes explain${width > 20 ? " — check comps or over-pouring" : ""}.`
                             : `${fmt(Math.abs(line.variance))} ${unitLabel(line.ingredient.unit)} less was used than expected — check the closing count or a missed sale.`}
@@ -670,31 +699,36 @@ export default function Inventory() {
                 })}
               </div>
 
-              <label className="field notes-field">
-                <span>Shift notes</span>
+              <label className="px-4 space-y-1">
+                <span className="text-xs font-semibold text-ink-soft uppercase tracking-wider block">Shift notes</span>
                 <textarea
                   rows={3}
                   placeholder="Comps, spills, deliveries, anything that explains the gap…"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
+                  className="w-full bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
                 />
               </label>
 
-              <button className="btn btn-primary btn-block" onClick={save} disabled={saving || loading}>
+              <button
+                className="w-full bg-ink text-white py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors"
+                onClick={save}
+                disabled={saving || loading}
+              >
                 {saving
                   ? "Saving…"
                   : savedClosing
                     ? `Update ${shiftShort(shift)} closing`
                     : `Save ${shiftShort(shift)} closing`}
               </button>
-              <p className="muted small center">
+              <p className="px-4 pt-2 pb-4 text-xs text-muted text-center">
                 Saves a permanent snapshot of this shift's variance.
               </p>
             </div>
 
-            <div className="card explainer">
-              <p className="mini-label">Why variance matters</p>
-              <p>
+            <div className="bg-surface border border-line rounded-lg p-4">
+              <p className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Why variance matters</p>
+              <p className="mt-1 text-sm text-muted">
                 A gap that keeps showing up on milk but not on coffee usually means
                 over-pouring or free drinks. An even gap across both usually means an
                 unrecorded sale.
@@ -704,7 +738,7 @@ export default function Inventory() {
         </div>
       )}
 
-      {toast && <div className="toast">{toast}</div>}
+      {toast && <div className="fixed bottom-4 right-4 z-50 bg-ink text-white px-4 py-2 rounded-lg shadow-lg">{toast}</div>}
     </>
   );
 }

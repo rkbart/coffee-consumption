@@ -42,14 +42,14 @@ export default function Pagination({
   const end = Math.min(total, page * pageSize);
 
   return (
-    <div className="pagination">
-      <p className="pagination-info">
+    <div className="flex items-center justify-between gap-4 mt-6 pt-4 border-t border-line">
+      <p className="text-sm text-muted">
         Showing {start}–{end} of {total} {label}
       </p>
-      <nav className="pagination-pages" aria-label={`${label} pages`}>
+      <nav className="flex items-center gap-1" aria-label={`${label} pages`}>
         <button
           type="button"
-          className="page-btn page-step"
+          className="px-2.5 py-1.5 bg-surface border border-line rounded-lg text-ink hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50 disabled:pointer-events-none"
           onClick={() => onPageChange(page - 1)}
           disabled={page === 1}
           aria-label="Previous page"
@@ -61,7 +61,11 @@ export default function Pagination({
             <button
               type="button"
               key={token}
-              className={`page-btn${token === page ? " active" : ""}`}
+              className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${
+                token === page
+                  ? "bg-ink text-white"
+                  : "bg-surface text-ink hover:bg-surface-2 border border-line"
+              }`}
               onClick={() => onPageChange(token)}
               aria-current={token === page ? "page" : undefined}
               aria-label={`Page ${token}`}
@@ -69,14 +73,14 @@ export default function Pagination({
               {token}
             </button>
           ) : (
-            <span key={token} className="page-gap" aria-hidden="true">
+            <span key={token} className="px-1 text-muted" aria-hidden="true">
               …
             </span>
           ),
         )}
         <button
           type="button"
-          className="page-btn page-step"
+          className="px-2.5 py-1.5 bg-surface border border-line rounded-lg text-ink hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50 disabled:pointer-events-none"
           onClick={() => onPageChange(page + 1)}
           disabled={page === pageCount}
           aria-label="Next page"

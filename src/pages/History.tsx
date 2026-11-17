@@ -122,53 +122,69 @@ export default function History() {
         description="Every saved close is a snapshot. Recipes can change tomorrow; these numbers stay as they were counted."
       />
 
-      {error && <div className="banner banner-error">{error}</div>}
+      {error && (
+        <div className="bg-red-soft border border-red rounded-lg p-3 flex items-center gap-2">
+          {error}
+        </div>
+      )}
 
       {closings.length === 0 ? (
-        <div className="empty-state">
-          <h2>No closings saved yet</h2>
-          <p>Finish a daily count and save it to start building the ledger.</p>
-          <Link className="btn btn-primary" to="/inventory">
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <h2 className="text-lg font-serif font-medium text-ink">No closings saved yet</h2>
+          <p className="mt-1 text-muted text-sm max-w-xs mx-auto">
+            Finish a daily count and save it to start building the ledger.
+          </p>
+          <Link className="mt-4 bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors" to="/inventory">
             Go to the count sheet
           </Link>
         </div>
       ) : (
-        <div className="history-layout">
-          <aside className="card history-list">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <aside className="bg-surface border border-line rounded-lg lg:col-span-4">
             <SearchField
               value={search}
               onChange={setSearch}
               placeholder="Search date or note…"
               label="Search closing history"
             />
-            <div className="history-list-head">
-              <p className="mini-label">{query ? "Matching closings" : "All closings"}</p>
-              <span className="count-chip">{filteredClosings.length}</span>
+            <div className="flex items-center justify-between mb-3 px-4 pt-4">
+              <p className="text-xs font-semibold text-ink-soft uppercase tracking-wider">
+                {query ? "Matching closings" : "All closings"}
+              </p>
+              <span className="inline-block px-2 py-0.5 rounded-full bg-line/50 text-xs text-ink-soft">
+                {filteredClosings.length}
+              </span>
             </div>
             {filteredClosings.length === 0 && (
-              <p className="muted small history-no-match">
-                No closings match this search.
-              </p>
+              <p className="px-4 text-xs text-muted">No closings match this search.</p>
             )}
-            <ul>
+            <ul className="px-4 pb-4 space-y-1">
               {pagedClosings.map((closing) => (
                 <li key={closing.id}>
                   <Link
                     to={`/history/${closing.id}`}
-                    className={`history-item${closing.id === selectedId ? " active" : ""}`}
+                    className={`flex items-center justify-between p-2 rounded-lg transition-colors no-underline ${
+                      closing.id === selectedId
+                        ? "bg-accent-soft text-accent-dark"
+                        : "text-accent hover:bg-surface-2"
+                    }`}
                   >
-                    <span>
-                      <strong>{formatDate(closing.date)}</strong>
-                      <small>
+                    <span className="flex flex-col gap-0.5">
+                      <strong className="text-ink">{formatDate(closing.date)}</strong>
+                      <span className="text-xs text-muted">
                         {shiftShort(closing.shift)}
                         {closing.prepared_by ? ` · ${closing.prepared_by}` : ""} ·{" "}
                         {closing.ingredient_count} ingredients
-                      </small>
+                      </span>
                     </span>
                     {closing.flagged_count > 0 ? (
-                      <span className="flag-badge">{closing.flagged_count}</span>
+                      <span className="inline-block px-2 py-0.5 rounded-full bg-red-soft text-red text-[10px] font-medium">
+                        {closing.flagged_count}
+                      </span>
                     ) : (
-                      <span className="check-badge">✓</span>
+                      <span className="inline-block px-2 py-0.5 rounded-full bg-green-soft text-green text-[10px] font-medium">
+                        ✓
+                      </span>
                     )}
                   </Link>
                 </li>
@@ -184,37 +200,42 @@ export default function History() {
             />
           </aside>
 
-          <section className="stack">
+          <section className="flex flex-col gap-4 lg:col-span-8">
             {!detail || loadingDetail ? (
-              <div className="card skeleton-card" />
+              <div className="bg-surface border border-line rounded-lg h-64 flex items-center justify-center" />
             ) : (
               <>
-                <div className="card">
-                  <div className="history-detail-head">
+                <div className="bg-surface border border-line rounded-lg overflow-hidden">
+                  <div className="flex items-start justify-between mb-3 px-4 pt-4 pb-2 border-b border-line">
                     <div>
-                      <p className="eyebrow">Reconciliation</p>
-                      <h2>{formatDate(detail.date, "long")}</h2>
-                      <div className="history-meta">
-                        <span className={`shift-badge ${detail.shift}`}>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Reconciliation</p>
+                      <h2 className="text-lg font-serif font-medium text-ink">
+                        {formatDate(detail.date, "long")}
+                      </h2>
+                      <div className="mt-1 flex gap-4 text-sm text-muted">
+                        <span className={`inline-block px-2 py-0.5 rounded-full bg-surface-2 text-xs text-ink`}>
                           {shiftLabel(detail.shift)}
                         </span>
                         <span>
-                          Prepared by <strong>{detail.prepared_by || "not recorded"}</strong>
+                          Prepared by <strong className="text-ink">{detail.prepared_by || "not recorded"}</strong>
                         </span>
                       </div>
                     </div>
-                    <div className="history-detail-actions">
+                    <div className="flex items-center gap-2">
                       {flagged > 0 ? (
-                        <span className="pill pill-over">
-                          <span className="pill-dot" /> {flagged} flagged
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-soft text-red text-xs font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                          {flagged} flagged
                         </span>
                       ) : (
-                        <span className="pill pill-on-target">
-                          <span className="pill-dot" /> Balanced
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-soft text-green text-xs font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                          Balanced
                         </span>
                       )}
                       <button
-                        className="icon-btn danger"
+                        type="button"
+                        className="p-1.5 hover:bg-red-soft rounded-lg text-muted hover:text-red transition-colors"
                         aria-label="Delete closing"
                         onClick={() => setConfirmDelete(true)}
                       >
@@ -223,36 +244,40 @@ export default function History() {
                     </div>
                   </div>
 
-                  {detail.notes && <p className="hero-note"><span>Shift note</span> {detail.notes}</p>}
+                  {detail.notes && (
+                    <p className="px-4 pt-3 pb-2 text-sm text-muted flex items-center gap-2">
+                      <span className="font-medium text-ink">Shift note</span> {detail.notes}
+                    </p>
+                  )}
 
-                  <div className="table-scroll">
-                    <table className="data-table">
+                  <div className="overflow-x-auto px-4 pb-4">
+                    <table className="w-full border-collapse text-sm">
                       <thead>
-                        <tr>
-                          <th>Ingredient</th>
-                          <th className="right">Opening</th>
-                          <th className="right">Deliv.</th>
-                          <th className="right">Waste</th>
-                          <th className="right">Closing</th>
-                          <th className="right">Actual</th>
-                          <th className="right">Theory</th>
-                          <th className="right">Variance</th>
+                        <tr className="text-left border-b border-line">
+                          <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider">Ingredient</th>
+                          <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider text-right">Opening</th>
+                          <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider text-right">Deliv.</th>
+                          <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider text-right">Waste</th>
+                          <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider text-right">Closing</th>
+                          <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider text-right">Actual</th>
+                          <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider text-right">Theory</th>
+                          <th className="pb-2 font-medium text-ink-soft text-xs uppercase tracking-wider text-right">Variance</th>
                         </tr>
                       </thead>
                       <tbody>
                         {detail.lines.map((line) => (
-                          <tr key={line.id}>
-                            <td>
-                              <strong>{line.ingredient_name}</strong>
-                              <small className="unit-inline"> {unitLabel(line.unit)}</small>
+                          <tr key={line.id} className="border-b border-line/50">
+                            <td className="pb-3">
+                              <strong className="text-ink">{line.ingredient_name}</strong>
+                              <span className="ml-0.5 text-xs text-muted">{unitLabel(line.unit)}</span>
                             </td>
-                            <td className="right numeric">{fmt(line.opening)}</td>
-                            <td className="right numeric">{fmt(line.deliveries)}</td>
-                            <td className="right numeric">{fmt(line.waste)}</td>
-                            <td className="right numeric">{fmt(line.closing)}</td>
-                            <td className="right numeric strong">{fmt(line.actual_usage)}</td>
-                            <td className="right numeric">{fmt(line.theoretical_usage)}</td>
-                            <td className="right">
+                            <td className="pb-3 text-right [font-variant-numeric:tabular-nums]">{fmt(line.opening)}</td>
+                            <td className="pb-3 text-right [font-variant-numeric:tabular-nums]">{fmt(line.deliveries)}</td>
+                            <td className="pb-3 text-right [font-variant-numeric:tabular-nums]">{fmt(line.waste)}</td>
+                            <td className="pb-3 text-right [font-variant-numeric:tabular-nums]">{fmt(line.closing)}</td>
+                            <td className="pb-3 text-right [font-variant-numeric:tabular-nums] font-medium text-ink">{fmt(line.actual_usage)}</td>
+                            <td className="pb-3 text-right [font-variant-numeric:tabular-nums]">{fmt(line.theoretical_usage)}</td>
+                            <td className="pb-3 text-right">
                               <VariancePill
                                 variance={line.variance}
                                 theoretical={line.theoretical_usage}
@@ -266,21 +291,24 @@ export default function History() {
                   </div>
                 </div>
 
-                <div className="card">
-                  <div className="panel-head">
+                <div className="bg-surface border border-line rounded-lg overflow-hidden">
+                  <div className="flex items-start justify-between mb-3 px-4 pt-4 pb-2 border-b border-line">
                     <div>
-                      <p className="eyebrow">POS record</p>
-                      <h2>Drinks sold</h2>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">POS record</p>
+                      <h2 className="text-lg font-serif font-medium text-ink">Drinks sold</h2>
                     </div>
-                    <span className="count-chip">
+                    <span className="inline-block px-2 py-0.5 rounded-full bg-line/50 text-xs text-ink-soft">
                       {detail.sales.reduce((sum, sale) => sum + sale.quantity, 0)} cups
                     </span>
                   </div>
-                  <div className="sold-chips">
+                  <div className="flex flex-wrap gap-1 px-4 pb-4">
                     {detail.sales.map((sale) => (
-                      <span className="sold-chip" key={sale.id}>
-                        <strong>{sale.quantity}×</strong> {sale.product_name}
-                        {sale.size_label && <small>{sale.size_label}</small>}
+                      <span
+                        key={sale.id}
+                        className="px-2 py-0.5 rounded bg-surface-2 text-xs text-ink-soft"
+                      >
+                        <strong className="text-ink">{sale.quantity}×</strong> {sale.product_name}
+                        {sale.size_label && <span className="ml-0.5 text-xs text-muted">{sale.size_label}</span>}
                       </span>
                     ))}
                   </div>
@@ -288,7 +316,7 @@ export default function History() {
 
                 <Link
                   to={`/inventory?date=${detail.date}&shift=${detail.shift}`}
-                  className="text-link back-link"
+                  className="text-accent hover:underline text-sm font-medium inline-flex items-center gap-1 px-4 pt-3 pb-6"
                 >
                   <IconArrowLeft size={15} /> Need to correct this? Reopen the count sheet
                 </Link>
@@ -304,23 +332,31 @@ export default function History() {
         subtitle="This removes the snapshot permanently. The count sheet is not affected."
         onClose={() => setConfirmDelete(false)}
       >
-        <p className="confirm-copy">
+        <p className="text-sm text-ink mb-4">
           {detail
             ? `${formatDate(detail.date, "long")} · ${shiftLabel(detail.shift)}`
             : ""}{" "}
           will no longer appear in your history.
         </p>
-        <div className="form-actions">
-          <button className="btn btn-quiet" onClick={() => setConfirmDelete(false)}>
+        <div className="flex justify-end gap-2 pt-3 border-t border-line">
+          <button
+            type="button"
+            className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors"
+            onClick={() => setConfirmDelete(false)}
+          >
             Keep it
           </button>
-          <button className="btn btn-danger" onClick={remove}>
+          <button
+            type="button"
+            className="bg-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-dark transition-colors"
+            onClick={remove}
+          >
             Delete closing
           </button>
         </div>
       </Modal>
 
-      {toast && <div className="toast">{toast}</div>}
+      {toast && <div className="fixed bottom-4 right-4 z-50 bg-ink text-white px-4 py-2 rounded-lg shadow-lg">{toast}</div>}
     </>
   );
 }

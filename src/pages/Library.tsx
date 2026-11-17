@@ -124,85 +124,102 @@ export default function Library() {
         description="Every purchased ingredient and packaging material in one place. Packaging shows cost per piece and the total per drink based on quantity needed."
         actions={
           <button
-            className="btn btn-primary"
+            className="bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
             onClick={() =>
               tab === "ingredients"
                 ? setIngredientModal("new")
                 : setPackagingModal("new")
             }
           >
-            <IconPlus size={17} /> Add {tab === "ingredients" ? "ingredient" : "packaging"}
+            <IconPlus size={17} className="mr-1.5" /> Add{" "}
+            {tab === "ingredients" ? "ingredient" : "packaging"}
           </button>
         }
       />
 
-      {error && <div className="banner banner-error">{error}</div>}
+      {error && (
+        <div className="bg-red-soft border border-red rounded-lg p-3 text-red text-sm">
+          {error}
+        </div>
+      )}
 
-      <div className="list-toolbar">
+      <div className="flex items-start justify-between gap-3 mb-4">
         <SearchField
           value={search}
           onChange={setSearch}
           placeholder="Search ingredients, groups, packaging…"
           label="Search the costing library"
         />
-        <p className="search-summary" aria-live="polite">
+        <p className="flex-1 text-sm text-muted leading-relaxed">
           {query
             ? `${totalMatches} result${totalMatches === 1 ? "" : "s"} for “${debouncedSearch.trim()}”`
             : `${ingredients.length} ingredients · ${packaging.length} packaging`}
         </p>
       </div>
 
-      <section className="card library-page">
-        <div className="library-page-head">
-          <div className="library-tabs" role="tablist" aria-label="Library section">
+      <section className="bg-surface border border-line rounded-lg p-5">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-3">
+          <div className="flex items-center gap-2" role="tablist" aria-label="Library section">
             <button
               type="button"
               role="tab"
               aria-selected={tab === "ingredients"}
-              className={tab === "ingredients" ? "active" : ""}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                tab === "ingredients"
+                  ? "bg-accent-soft text-accent-dark"
+                  : "text-ink-soft hover:bg-surface-2 hover:text-ink"
+              }`}
               onClick={() => setTab("ingredients")}
             >
-              <IconCoffee size={15} /> Ingredients
-              <span className="tab-count">{filteredIngredients.length}</span>
+              <IconCoffee size={15} className="shrink-0" /> Ingredients
+              <span className="ml-1 px-1.5 py-0.5 bg-surface-2 text-ink-soft rounded text-xs font-medium">
+                {filteredIngredients.length}
+              </span>
             </button>
             <button
               type="button"
               role="tab"
               aria-selected={tab === "packaging"}
-              className={tab === "packaging" ? "active" : ""}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                tab === "packaging"
+                  ? "bg-accent-soft text-accent-dark"
+                  : "text-ink-soft hover:bg-surface-2 hover:text-ink"
+              }`}
               onClick={() => setTab("packaging")}
             >
-              <IconMilk size={15} /> Packaging
-              <span className="tab-count">{filteredPackaging.length}</span>
+              <IconMilk size={15} className="shrink-0" /> Packaging
+              <span className="ml-1 px-1.5 py-0.5 bg-surface-2 text-ink-soft rounded text-xs font-medium">
+                {filteredPackaging.length}
+              </span>
             </button>
           </div>
           <button
-            className="btn btn-quiet btn-sm"
+            className="bg-surface border border-line rounded-lg px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
             onClick={() =>
               tab === "ingredients"
                 ? setIngredientModal("new")
                 : setPackagingModal("new")
             }
           >
-            <IconPlus size={15} /> Add
+            <IconPlus size={15} className="mr-1.5" /> Add
           </button>
         </div>
 
-        <p className="muted panel-note">
+        <p className="text-sm text-muted mb-4">
           {tab === "ingredients"
             ? "Pack price is spread across the pack size, net of waste. For a base you make yourself, use the batch cost and batch yield."
             : "Cups, lids, straws and bags are costed per piece. Price per piece × quantity needed = packaging cost per drink."}
         </p>
 
         {loading ? (
-          <div className="card skeleton-card" />
+          <div className="h-32 bg-surface-2 border border-line rounded-lg animate-pulse" />
         ) : tab === "ingredients" ? (
           <>
             {filteredIngredients.length === 0 ? (
-              <div className="library-empty">
-                <p>{query ? "No ingredients match this search." : "No ingredients yet."}</p>
+              <div className="text-center py-6">
+                <p className="text-muted">{query ? "No ingredients match this search." : "No ingredients yet."}</p>
                 <button
-                  className="btn btn-primary btn-sm"
+                  className="bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                   onClick={() => (query ? setSearch("") : setIngredientModal("new"))}
                 >
                   {query ? "Clear search" : "Add the first ingredient"}
@@ -211,8 +228,8 @@ export default function Library() {
             ) : (
               <>
                 {Object.entries(ingredientGroups).map(([category, rows]) => (
-                  <div className="ingredient-group" key={category}>
-                    <p className="mini-label">{category}</p>
+                  <div key={category} className="mb-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">{category}</p>
                     {rows.map((ingredient) => {
                       const net =
                         ingredient.pack_size * (1 - (ingredient.waste_pct || 0) / 100);
@@ -220,30 +237,30 @@ export default function Library() {
                         ingredient.pack_price > 0 && net > 0
                           ? ingredient.pack_price / net
                           : null;
+                      const dotColor =
+                        ingredient.unit === "g"
+                          ? "bg-accent"
+                          : ingredient.unit === "ml"
+                            ? "bg-green"
+                            : "bg-muted";
                       return (
                         <button
                           key={ingredient.id}
-                          className="ingredient-row library-row"
+                          className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-left hover:bg-surface-2 transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
                           onClick={() => setIngredientModal(ingredient)}
                         >
                           <span
-                            className={`ingredient-dot ${
-                              ingredient.unit === "g"
-                                ? "coffee"
-                                : ingredient.unit === "ml"
-                                  ? "milk"
-                                  : "other"
-                            }`}
+                            className={`w-2 h-2 rounded-full shrink-0 ${dotColor}`}
                           />
-                          <span className="ingredient-copy">
-                            <span className="ingredient-name">{ingredient.name}</span>
-                            <span className="ingredient-price">
+                          <span className="flex-1 min-w-0">
+                            <span className="font-medium text-ink truncate">{ingredient.name}</span>
+                            <span className="text-xs text-muted block">
                               {ingredient.pack_price > 0
                                 ? `${money(ingredient.pack_price)} / ${fmt(ingredient.pack_size)} ${unitLabel(ingredient.unit)}`
                                 : "Add a purchase price"}
                             </span>
                           </span>
-                          <span className="unit-chip">
+                          <span className="text-xs font-medium text-accent-dark shrink-0 whitespace-nowrap">
                             {unitCost !== null
                               ? `${unitMoney(unitCost)}/${unitLabel(ingredient.unit)}`
                               : unitLabel(ingredient.unit)}
@@ -259,10 +276,10 @@ export default function Library() {
         ) : (
           <>
             {filteredPackaging.length === 0 ? (
-              <div className="library-empty">
-                <p>{query ? "No packaging materials match this search." : "No packaging materials yet."}</p>
+              <div className="text-center py-6">
+                <p className="text-muted">{query ? "No packaging materials match this search." : "No packaging materials yet."}</p>
                 <button
-                  className="btn btn-primary btn-sm"
+                  className="bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                   onClick={() => (query ? setSearch("") : setPackagingModal("new"))}
                 >
                   {query ? "Clear search" : "Add the first material"}
@@ -270,23 +287,23 @@ export default function Library() {
               </div>
             ) : (
               <>
-                <div className="packaging-list">
+                <div className="space-y-2">
                   {pagedPackaging.map((material) => {
                     const totalCost = packagingTotalCost(material);
                     const isExpanded = expandedPackagingId === material.id;
                     return (
                       <article
                         key={material.id}
-                        className={`packaging-card${isExpanded ? " expanded" : ""}`}
+                        className={`border border-line rounded-lg bg-surface p-4 cursor-pointer transition-all hover:border-line-strong hover:bg-surface-2 ${isExpanded ? "border-accent bg-accent-soft" : ""}`}
                         onClick={() => {
                           if (isExpanded) setExpandedPackagingId(null);
                           else setExpandedPackagingId(material.id);
                         }}
                       >
-                        <div className="packaging-card-main">
+                        <div className="flex items-center justify-between gap-3">
                           <button
                             type="button"
-                            className="packaging-name-link"
+                            className="flex items-center gap-2 text-left font-medium text-ink hover:underline hover:text-accent-dark"
                             aria-expanded={isExpanded}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -294,64 +311,60 @@ export default function Library() {
                               else setExpandedPackagingId(material.id);
                             }}
                           >
-                            <span className="ingredient-name">{material.name}</span>
-                            <span className="unit-badge">
+                            <span className="font-medium">{material.name}</span>
+                            <span className="px-1.5 py-0.5 border border-line rounded-full text-xs font-medium text-ink-soft bg-surface-2">
                               {unitLabel(material.unit)}
                             </span>
                           </button>
-                          <span className="card-total-cost">
+                          <span className="text-sm font-medium text-accent-dark whitespace-nowrap">
                             {totalCost !== null ? money(totalCost) : "—"}
                           </span>
                         </div>
                         {isExpanded && (
-                          <div className="packaging-card-details">
+                          <div className="mt-3 pt-3 border-t border-line space-y-2">
                             {material.description && (
-                              <p className="packaging-card-desc muted small">
-                                {material.description}
-                              </p>
+                              <p className="text-sm text-muted">{material.description}</p>
                             )}
-                            <div className="packaging-detail-row">
-                              <span className="detail-label">Pack price</span>
-                              <span className="detail-value">
-                                {material.pack_price > 0
-                                  ? money(material.pack_price)
-                                  : "—"}
-                              </span>
+                            <div className="grid grid-cols-3 gap-3 text-xs">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-muted uppercase tracking-wider text-[10px]">Pack price</span>
+                                <span className="text-ink font-medium">
+                                  {material.pack_price > 0 ? money(material.pack_price) : "—"}
+                                </span>
+                              </div>
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-muted uppercase tracking-wider text-[10px]">Qty per drink</span>
+                                <span className="text-ink font-medium">{fmt(material.qty_needed)}</span>
+                              </div>
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-muted uppercase tracking-wider text-[10px]">Cost per drink</span>
+                                <span className="text-accent-dark font-medium">
+                                  {totalCost !== null ? money(totalCost) : "—"}
+                                </span>
+                              </div>
                             </div>
-                            <div className="packaging-detail-row">
-                              <span className="detail-label">Qty per drink</span>
-                              <span className="detail-value">
-                                {fmt(material.qty_needed)}
-                              </span>
-                            </div>
-                            <div className="packaging-detail-row">
-                              <span className="detail-label">Cost per drink</span>
-                              <span className="detail-value cost-amount">
-                                {totalCost !== null ? money(totalCost) : "—"}
-                              </span>
-                            </div>
-                            <div className="packaging-card-actions">
+                            <div className="flex gap-2 mt-3">
                               <button
                                 type="button"
-                                className="btn btn-quiet btn-sm"
+                                className="flex-1 bg-surface border border-line rounded-lg px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setPackagingModal(material);
                                   setExpandedPackagingId(null);
                                 }}
                               >
-                                <IconEdit size={15} /> Edit
+                                <IconEdit size={14} className="mr-1.5" /> Edit
                               </button>
                               <button
                                 type="button"
-                                className="btn btn-ghost-danger btn-sm"
+                                className="text-red hover:bg-red-soft px-3 py-1.5 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-1"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setPendingDelete(material);
                                   setExpandedPackagingId(null);
                                 }}
                               >
-                                <IconTrash size={15} /> Delete
+                                <IconTrash size={14} className="mr-1.5" /> Delete
                               </button>
                             </div>
                           </div>
@@ -360,9 +373,9 @@ export default function Library() {
                     );
                   })}
                 </div>
-                <div className="packaging-totals-bar">
-                  <span className="label">Total packaging cost per drink:</span>
-                  <span className="total">
+                <div className="mt-4 pt-3 border-t border-line flex items-center justify-between">
+                  <span className="text-sm font-medium text-ink-soft">Total packaging cost per drink:</span>
+                  <span className="text-sm font-bold text-accent-dark">
                     {money(
                       pagedPackaging.reduce(
                         (sum, m) => sum + (packagingTotalCost(m) ?? 0),
@@ -404,7 +417,11 @@ export default function Library() {
           }}
         />
 
-        {toast && <div className="toast">{toast}</div>}
+        {toast && (
+          <div className="mt-4 bg-accent-soft text-accent-dark rounded-lg px-3 py-2 text-sm font-medium">
+            {toast}
+          </div>
+        )}
 
         <Modal
           open={Boolean(pendingDelete)}
@@ -412,16 +429,16 @@ export default function Library() {
           subtitle="Past recipes keep their snapshot, so cost history is not affected."
           onClose={() => setPendingDelete(null)}
         >
-          <p className="confirm-copy">
-            <strong>{pendingDelete?.name}</strong> will be removed from your
+          <p className="text-sm leading-relaxed">
+            <strong className="text-ink">{pendingDelete?.name}</strong> will be removed from your
             packaging list and from any recipes that use it.
           </p>
-          <div className="form-actions">
-            <button className="btn btn-quiet" onClick={() => setPendingDelete(null)}>
+          <div className="mt-4 flex justify-end gap-2">
+            <button className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1" onClick={() => setPendingDelete(null)}>
               Keep it
             </button>
             <button
-              className="btn btn-danger"
+              className="bg-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-dark transition-colors focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-2"
               onClick={async () => {
                 if (!pendingDelete) return;
                 try {

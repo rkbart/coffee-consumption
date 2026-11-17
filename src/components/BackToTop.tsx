@@ -16,13 +16,13 @@ export default function BackToTop() {
   return (
     <button
       type="button"
-      className="back-to-top"
+      className="fixed bottom-6 right-6 z-50 px-4 py-2 bg-ink text-white rounded-full shadow-lg hover:bg-accent-dark transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       aria-label="Back to top"
       title="Back to top"
     >
       <IconArrowUp size={17} />
-      <span>Top</span>
+      <span className="sr-only">Top</span>
     </button>
   );
 }

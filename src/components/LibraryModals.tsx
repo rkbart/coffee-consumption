@@ -94,33 +94,39 @@ export function IngredientModal({
       subtitle="How you buy it, and the unit you count it in at open and close."
       onClose={onClose}
     >
-      <form onSubmit={submit} className="form">
-        <label className="field">
-          <span>Name</span>
+      <form onSubmit={submit} className="space-y-3">
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider">Name</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Whole Milk"
             autoFocus
+            className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
           />
-        </label>
+        </div>
 
-        <div className="form-grid">
-          <label className="field">
-            <span>Counted in</span>
-            <select value={unit} onChange={(e) => setUnit(e.target.value as Unit)}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider">Counted in</label>
+            <select
+              value={unit}
+              onChange={(e) => setUnit(e.target.value as Unit)}
+              className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
+            >
               <option value="g">Grams (g)</option>
               <option value="ml">Millilitres (ml)</option>
               <option value="pcs">Pieces (pcs)</option>
             </select>
-          </label>
-          <label className="field">
-            <span>Group</span>
+          </div>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider">Group</label>
             <input
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               placeholder="Dairy"
               list="ingredient-groups"
+              className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
             />
             <datalist id="ingredient-groups">
               <option value="Coffee" />
@@ -131,24 +137,24 @@ export function IngredientModal({
               <option value="Packaging" />
               <option value="Other" />
             </datalist>
-          </label>
+          </div>
         </div>
 
         {category.trim().toLowerCase() === "base" && (
-          <p className="field-hint">
+          <p className="text-xs text-muted">
             For a made-in-house base, enter the cost of one batch as the pack price and
             the batch yield as the pack size. Recipes can use it directly.
           </p>
         )}
 
-        <div className="form-section">
-          <div className="form-section-head">
-            <h3>Purchase data</h3>
-            <p>Used to turn a pack price into a cost per {unitLabel(unit)}.</p>
+        <div className="border border-line rounded-lg p-3 space-y-3">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-xs font-serif font-medium text-ink uppercase tracking-wider">Purchase data</h3>
+            <span className="text-xs text-muted">Used to turn a pack price into a cost per {unitLabel(unit)}.</span>
           </div>
-          <div className="form-grid three">
-            <label className="field">
-              <span>Pack price</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider">Pack price</label>
               <input
                 type="number"
                 min="0"
@@ -156,10 +162,11 @@ export function IngredientModal({
                 value={packPrice}
                 onChange={(e) => setPackPrice(e.target.value)}
                 placeholder="1100"
+                className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
               />
-            </label>
-            <label className="field">
-              <span>Pack size ({unitLabel(unit)})</span>
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider">Pack size</label>
               <input
                 type="number"
                 min="0"
@@ -167,10 +174,11 @@ export function IngredientModal({
                 value={packSize}
                 onChange={(e) => setPackSize(e.target.value)}
                 placeholder={unit === "pcs" ? "1" : "1000"}
+                className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
               />
-            </label>
-            <label className="field">
-              <span>Waste %</span>
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider">Waste %</label>
               <input
                 type="number"
                 min="0"
@@ -178,35 +186,44 @@ export function IngredientModal({
                 step="0.1"
                 value={wastePct}
                 onChange={(e) => setWastePct(e.target.value)}
+                className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
               />
-            </label>
+            </div>
           </div>
         </div>
 
-        <p className="cost-inline-note">
+        <p className="text-sm text-muted">
           {unitCost !== null
             ? `Net recovery ${fmt(netRecovery, 2)} ${unitLabel(unit)} · ${unitMoney(unitCost)} per ${unitLabel(unit)}`
             : "Add a pack price and pack size to cost the recipes that use this."}
         </p>
 
-        {error && <p className="form-error">{error}</p>}
+        {error && <p className="text-sm text-red">{error}</p>}
 
-        <div className="form-actions split">
+        <div className="flex justify-end gap-2 pt-3 border-t border-line">
           {ingredient ? (
-            <button type="button" className="btn btn-ghost-danger" onClick={remove}>
+            <button
+              type="button"
+              className="text-red hover:bg-red-soft px-3 py-1.5 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-1"
+              onClick={remove}
+            >
               Delete
             </button>
-          ) : (
-            <span />
-          )}
-          <div className="form-actions-right">
-            <button type="button" className="btn btn-quiet" onClick={onClose}>
-              Cancel
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? "Saving…" : "Save ingredient"}
-            </button>
-          </div>
+          ) : null}
+          <button
+            type="button"
+            className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+            disabled={saving}
+          >
+            {saving ? "Saving…" : "Save ingredient"}
+          </button>
         </div>
       </form>
     </Modal>
@@ -261,8 +278,6 @@ export function PackagingModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Keep rows in sync with the material being edited so switching materials
-  // inside an open modal always loads the correct data.
   useEffect(() => {
     setRows(material ? [rowFromMaterial(material)] : [emptyRow()]);
   }, [material]);
@@ -308,7 +323,6 @@ export function PackagingModal({
     setSaving(true);
     try {
       if (material) {
-        // First row updates the existing material; any extra rows create new ones.
         const first = rows[0];
         const body: PackagingInput = {
           name: first.name.trim(),
@@ -375,21 +389,21 @@ export function PackagingModal({
       onClose={onClose}
       wide
     >
-      <form onSubmit={submit} className="form">
-        {error && <p className="form-error">{error}</p>}
-        <div className="packaging-rows-table">
-          <table>
+      <form onSubmit={submit} className="space-y-3">
+        {error && <p className="text-sm text-red">{error}</p>}
+        <div className="border border-line rounded-lg overflow-hidden">
+          <table className="w-full text-sm border-collapse">
             <thead>
-              <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Brand / description</th>
-                <th scope="col" className="numeric">Pack price</th>
-                <th scope="col" className="numeric">Pack size</th>
-                <th scope="col">Unit</th>
-                <th scope="col" className="numeric">Price / unit</th>
-                <th scope="col" className="numeric">Qty / drink</th>
-                <th scope="col" className="numeric">Total</th>
-                <th scope="col" className="packaging-actions-col" />
+              <tr className="text-left">
+                <th className="pb-2 font-medium text-ink-soft text-[10px] uppercase tracking-wider">Name</th>
+                <th className="pb-2 font-medium text-ink-soft text-[10px] uppercase tracking-wider">Brand / description</th>
+                <th className="pb-2 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Pack price</th>
+                <th className="pb-2 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Pack size</th>
+                <th className="pb-2 font-medium text-ink-soft text-[10px] uppercase tracking-wider">Unit</th>
+                <th className="pb-2 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Price / unit</th>
+                <th className="pb-2 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Qty / drink</th>
+                <th className="pb-2 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Total</th>
+                <th className="pb-2 text-right w-12" />
               </tr>
             </thead>
             <tbody>
@@ -397,68 +411,75 @@ export function PackagingModal({
                 const { size: rowSize, pricePerUnit: rowPricePerUnit, total: rowTotal } = rowStats(r);
                 const rowError = validateRow(r);
                 return (
-                  <tr key={r.id} className={`packaging-row${rowError ? " row-error" : ""}`}>
-                    <td>
+                  <tr key={r.id} className={`border-b border-line/50 ${rowError ? "bg-red-soft/50" : ""}`}>
+                    <td className="pb-2">
                       <input
                         value={r.name}
                         onChange={(e) => updateField(r.id, "name", e.target.value)}
                         placeholder="16 oz cup"
                         autoFocus={rows.length === 1 && r.name === "" && isNew}
-                        aria-invalid={rowError ? true : undefined}
+                        className="w-full bg-transparent border-none outline-none text-ink focus:ring-0"
                       />
                     </td>
-                    <td>
+                    <td className="pb-2">
                       <input
                         value={r.description}
                         onChange={(e) => updateField(r.id, "description", e.target.value)}
                         placeholder="U-cup"
+                        className="w-full bg-transparent border-none outline-none text-ink focus:ring-0"
                       />
                     </td>
-                    <td className="numeric">
+                    <td className="pb-2 text-right">
                       <input
                         type="number"
                         min="0"
                         step="0.01"
                         value={r.packPrice}
                         onChange={(e) => updateField(r.id, "packPrice", e.target.value)}
+                        className="w-full bg-transparent border-none outline-none text-ink text-right focus:ring-0"
                       />
                     </td>
-                    <td className="numeric">
+                    <td className="pb-2 text-right">
                       <input
                         type="number"
                         min="0"
                         step="any"
                         value={r.packSize}
                         onChange={(e) => updateField(r.id, "packSize", e.target.value)}
+                        className="w-full bg-transparent border-none outline-none text-ink text-right focus:ring-0"
                       />
                     </td>
-                    <td>
+                    <td className="pb-2">
                       <select
                         value={r.unit}
                         onChange={(e) => updateField(r.id, "unit", e.target.value as Unit)}
+                        className="w-full bg-transparent border-none outline-none text-ink focus:ring-0"
                       >
                         <option value="pcs">pcs</option>
                         <option value="g">g</option>
                         <option value="ml">ml</option>
                       </select>
                     </td>
-                    <td className="numeric">
+                    <td className="pb-2 text-right">
                       {rowSize > 0 ? money(rowPricePerUnit) : "—"}
                     </td>
-                    <td className="numeric">
+                    <td className="pb-2 text-right">
                       <input
                         type="number"
                         min="0.01"
                         step="any"
                         value={r.qtyNeeded}
                         onChange={(e) => updateField(r.id, "qtyNeeded", e.target.value)}
+                        className="w-full bg-transparent border-none outline-none text-ink text-right focus:ring-0"
                       />
                     </td>
-                    <td className="numeric">{money(rowTotal)}</td>
-                    <td className="packaging-actions-col">
+                    <td className="pb-2 text-right font-medium text-accent-dark">
+                      {money(rowTotal)}
+                    </td>
+                    <td className="pb-2 text-right">
                       <button
                         type="button"
-                        className="btn btn-ghost-danger btn-sm"
+                        className="p-1 hover:bg-red-soft rounded-sm text-muted hover:text-red focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-1"
                         onClick={() => removeRow(r.id)}
                       >
                         Remove
@@ -469,26 +490,42 @@ export function PackagingModal({
               })}
             </tbody>
           </table>
-          <div className="packaging-grand-total">
-            <span>Grand total</span>
-            <span>{money(grandTotal)}</span>
+          <div className="px-4 py-2 border-t border-line flex items-center justify-between">
+            <span className="text-sm font-medium text-ink-soft">Grand total</span>
+            <span className="text-sm font-bold text-accent-dark">{money(grandTotal)}</span>
           </div>
         </div>
 
-        <div className="form-actions split">
-          <button type="button" className="btn btn-quiet" onClick={addRow}>
+        <div className="flex justify-between items-center gap-2 pt-3 border-t border-line">
+          <button
+            type="button"
+            className="bg-surface border border-line rounded-lg px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
+            onClick={addRow}
+          >
             + Add another entry
           </button>
-          <div className="form-actions-right">
+          <div className="flex gap-2">
             {material && (
-              <button type="button" className="btn btn-ghost-danger" onClick={removeMaterial}>
+              <button
+                type="button"
+                className="text-red hover:bg-red-soft px-3 py-1.5 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-1"
+                onClick={removeMaterial}
+              >
                 Delete
               </button>
             )}
-            <button type="button" className="btn btn-quiet" onClick={onClose}>
+            <button
+              type="button"
+              className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
+              onClick={onClose}
+            >
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
+            <button
+              type="submit"
+              className="bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+              disabled={saving}
+            >
               {saving ? "Saving…" : material ? "Save changes" : "Save all"}
             </button>
           </div>

@@ -159,25 +159,27 @@ export default function Settings() {
         description="Set how prices are displayed, move your ledger between machines, load a sample, or start over with a clean database."
       />
 
-      {error && <div className="banner banner-error">{error}</div>}
+      {error && (
+        <div className="bg-red-soft border border-red rounded-lg p-3">{error}</div>
+      )}
 
       {loading ? (
-        <div className="card skeleton-card" />
+        <div className="bg-surface border border-line rounded-lg h-64 flex items-center justify-center" />
       ) : (
-        <div className="settings-grid">
-          <section className="card settings-card">
-            <div className="settings-icon">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <section className="bg-surface border border-line rounded-lg overflow-hidden">
+            <div className="w-8 h-8 rounded bg-surface-2 flex items-center justify-center text-accent mb-3">
               <IconSettings size={19} />
             </div>
-            <p className="eyebrow">Appearance</p>
-            <h2>Currency</h2>
-            <p className="muted small settings-copy">
+            <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft px-4 pt-4">Appearance</p>
+            <h2 className="text-lg font-serif font-medium text-ink px-4">Currency</h2>
+            <p className="text-xs text-muted px-4 pt-1">
               Used for pack prices, food cost, selling price and margins across the
               library and recipes.
             </p>
-            <form className="settings-form" onSubmit={saveCurrency}>
-              <label className="field">
-                <span>Currency symbol</span>
+            <form className="px-4 space-y-3 pb-4" onSubmit={saveCurrency}>
+              <label className="space-y-1">
+                <span className="block text-xs font-semibold text-ink-soft uppercase tracking-wider">Currency symbol</span>
                 <input
                   value={currency}
                   onChange={(event) => setCurrency(event.target.value)}
@@ -185,6 +187,7 @@ export default function Settings() {
                   maxLength={8}
                   list="currency-symbols"
                   autoComplete="off"
+                  className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
                 />
                 <datalist id="currency-symbols">
                   <option value="₱">Philippine peso</option>
@@ -199,95 +202,105 @@ export default function Settings() {
                   <option value="₫">Vietnamese dong</option>
                   <option value="AED">UAE dirham</option>
                 </datalist>
-                <small className="field-hint">
+                <small className="text-xs text-muted block">
                   Examples: ₱, $, €, RM or “AED”. Up to 8 characters.
                 </small>
               </label>
-              <div className="currency-preview">
-                <span className="mini-label">Price preview</span>
-                <strong className="numeric">{currencyExample(currency)}</strong>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Price preview</span>
+                <strong className="text-lg font-serif font-medium text-ink">{currencyExample(currency)}</strong>
               </div>
-              <button className="btn btn-primary" type="submit" disabled={saving}>
+              <button
+                className="bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors"
+                type="submit"
+                disabled={saving}
+              >
                 {saving ? "Saving…" : "Save currency"}
               </button>
             </form>
           </section>
 
-          <section className="card settings-card">
-            <div className="settings-icon">
+          <section className="bg-surface border border-line rounded-lg overflow-hidden">
+            <div className="w-8 h-8 rounded bg-surface-2 flex items-center justify-center text-accent mb-3">
               <IconDatabase size={19} />
             </div>
-            <p className="eyebrow">Backup</p>
-            <h2>Import &amp; export</h2>
-            <p className="muted small settings-copy">
+            <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft px-4 pt-4">Backup</p>
+            <h2 className="text-lg font-serif font-medium text-ink px-4">Import &amp; export</h2>
+            <p className="text-xs text-muted px-4 pt-1">
               One CSV contains the costing library, menu recipes, closings, shift sales
               and your settings. Importing replaces everything currently in this
               database.
             </p>
-            <div className="settings-actions">
-              <button className="btn btn-primary" onClick={exportBackup}>
+            <div className="px-4 pb-4 flex gap-2">
+              <button
+                type="button"
+                className="bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors inline-flex items-center gap-2"
+                onClick={exportBackup}
+              >
                 <IconDownload size={16} /> Export backup
               </button>
-              <label className="btn btn-quiet file-picker">
+              <label className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors inline-flex items-center gap-2 cursor-pointer">
                 <IconUpload size={16} /> Import backup
                 <input
                   type="file"
                   accept=".csv,text/csv"
                   onChange={chooseFile}
-                  hidden
+                  className="hidden"
                 />
               </label>
             </div>
-            <p className="settings-note">
+            <p className="px-4 pt-2 pb-4 text-xs text-muted">
               Keep a backup before changing machines or redeploying to a host with a
               temporary filesystem.
             </p>
           </section>
 
-          <section className="card settings-card">
-            <div className="settings-icon">
+          <section className="bg-surface border border-line rounded-lg overflow-hidden">
+            <div className="w-8 h-8 rounded bg-surface-2 flex items-center justify-center text-accent mb-3">
               <IconDatabase size={19} />
             </div>
-            <p className="eyebrow">Sample</p>
-            <h2>Try the demo ledger</h2>
-            <p className="muted small settings-copy">
+            <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft px-4 pt-4">Sample</p>
+            <h2 className="text-lg font-serif font-medium text-ink px-4">Try the demo ledger</h2>
+            <p className="text-xs text-muted px-4 pt-1">
               New databases start empty. Load the sample café if you want to explore
               the app first: four ingredients, eight drinks and three shift closings.
             </p>
-            <div className="settings-actions">
+            <div className="px-4 pb-4 flex gap-2">
               <button
-                className="btn btn-quiet"
+                type="button"
+                className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors disabled:opacity-50 disabled:pointer-events-none"
                 onClick={() => setConfirmAction("demo")}
                 disabled={Boolean(busyAction)}
               >
                 Load demo data
               </button>
             </div>
-            <p className="settings-note">
+            <p className="px-4 pt-2 pb-4 text-xs text-muted">
               This replaces the current business data. Export a backup first if you
               need to keep it.
             </p>
           </section>
 
-          <section className="card settings-card danger-zone">
-            <div className="settings-icon danger">
+          <section className="bg-surface border border-line rounded-lg overflow-hidden">
+            <div className="w-8 h-8 rounded bg-red-soft text-red flex items-center justify-center mb-3">
               <IconDatabase size={19} />
             </div>
-            <p className="eyebrow">Danger zone</p>
-            <h2>Reset database</h2>
-            <p className="muted small settings-copy">
+            <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft px-4 pt-4">Danger zone</p>
+            <h2 className="text-lg font-serif font-medium text-ink px-4">Reset database</h2>
+            <p className="text-xs text-muted px-4 pt-1">
               Permanently deletes every ingredient, menu item, recipe, closing and
               sale. Your currency setting is kept. This cannot be undone.
             </p>
             {hasData && counts && (
-              <p className="settings-counts">
+              <p className="px-4 pt-1 pb-2 text-xs text-muted">
                 Currently {counts.ingredients} ingredients · {counts.beverages} beverages
                 · {counts.closings} closings
               </p>
             )}
-            <div className="settings-actions">
+            <div className="px-4 pb-4 flex gap-2">
               <button
-                className="btn btn-danger"
+                type="button"
+                className="bg-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-dark transition-colors disabled:opacity-50 disabled:pointer-events-none"
                 onClick={() => setConfirmAction("reset")}
                 disabled={Boolean(busyAction)}
               >
@@ -317,40 +330,47 @@ export default function Settings() {
         onClose={closeConfirm}
       >
         {confirmAction === "import" && pendingImport && (
-          <p className="confirm-copy">
+          <p className="text-sm text-ink mb-4">
             Import <strong>{pendingImport.name}</strong>? Every existing ingredient,
             beverage, closing and sale will be replaced by the backup.
           </p>
         )}
         {confirmAction === "demo" && (
-          <p className="confirm-copy">
+          <p className="text-sm text-ink mb-4">
             This clears the current business data and loads the sample ingredients,
             drinks and closings. Your currency setting is kept.
           </p>
         )}
         {confirmAction === "reset" && (
           <>
-            <p className="confirm-copy">
+            <p className="text-sm text-ink mb-4">
               This cannot be undone. Type <strong>RESET</strong> to confirm.
             </p>
-            <label className="field">
-              <span>Confirmation</span>
+            <label className="space-y-1">
+              <span className="block text-xs font-semibold text-ink-soft uppercase tracking-wider">Confirmation</span>
               <input
                 value={resetPhrase}
                 onChange={(event) => setResetPhrase(event.target.value)}
                 placeholder="RESET"
                 autoFocus
+                className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
               />
             </label>
           </>
         )}
 
-        <div className="form-actions">
-          <button className="btn btn-quiet" onClick={closeConfirm} disabled={Boolean(busyAction)}>
+        <div className="flex justify-end gap-2 pt-3 border-t border-line">
+          <button
+            type="button"
+            className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            onClick={closeConfirm}
+            disabled={Boolean(busyAction)}
+          >
             Cancel
           </button>
           <button
-            className={confirmAction === "reset" ? "btn btn-danger" : "btn btn-primary"}
+            type="button"
+            className={`bg-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-dark transition-colors disabled:opacity-50 disabled:pointer-events-none`}
             onClick={runConfirmedAction}
             disabled={
               Boolean(busyAction) ||
@@ -368,7 +388,7 @@ export default function Settings() {
         </div>
       </Modal>
 
-      {toast && <div className="toast">{toast}</div>}
+      {toast && <div className="fixed bottom-4 right-4 z-50 bg-ink text-white px-4 py-2 rounded-lg shadow-lg">{toast}</div>}
     </>
   );
 }

@@ -138,44 +138,61 @@ export default function Recipes() {
         title="Recipes"
         description="Cost each drink from the ingredients and bases in the costing library plus its packaging. Change a purchase price once and every card updates."
         actions={
-          <button className="btn btn-primary" onClick={() => setEditing("new")}>
-            <IconPlus size={17} /> New beverage
+          <button
+            className="bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+            onClick={() => setEditing("new")}
+          >
+            <IconPlus size={17} className="mr-1.5" /> New beverage
           </button>
         }
       />
 
-      {error && <div className="banner banner-error">{error}</div>}
+      {error && (
+        <div className="bg-red-soft border border-red rounded-lg p-3 text-red text-sm">
+          {error}
+        </div>
+      )}
 
-      <div className="list-toolbar menu-toolbar">
-        <SearchField
-          value={search}
-          onChange={setSearch}
-          placeholder="Search drinks, menu groups, ingredients…"
-          label="Search recipes"
-        />
-        <label className="menu-filter">
-          <span>Menu group</span>
-          <select value={menuGroup} onChange={(event) => setMenuGroup(event.target.value)}>
-            <option value="all">All menu groups</option>
-            {menuGroups.map((group) => (
-              <option key={group} value={group}>
-                {group}
-              </option>
-            ))}
-          </select>
-        </label>
-        <p className="search-summary" aria-live="polite">
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+        <div className="flex-1 min-w-0">
+          <SearchField
+            value={search}
+            onChange={setSearch}
+            placeholder="Search drinks, menu groups, ingredients…"
+            label="Search recipes"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-ink-soft">
+            <span>Menu group</span>
+            <select
+              value={menuGroup}
+              onChange={(event) => setMenuGroup(event.target.value)}
+              className="bg-surface border border-line rounded-lg px-2 py-1.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
+            >
+              <option value="all">All menu groups</option>
+              {menuGroups.map((group) => (
+                <option key={group} value={group}>
+                  {group}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <p className="flex-1 text-sm text-muted leading-relaxed">
           {summary}
         </p>
       </div>
 
-      <section className="stack">
+      <section className="space-y-4">
         {loading ? (
-          <div className="card skeleton-card" />
+          <div className="h-48 bg-surface-2 border border-line rounded-lg animate-pulse" />
         ) : filteredProducts.length === 0 ? (
-          <div className="empty-state">
-            <h2>{query || menuGroup !== "all" ? "No drinks match" : "No beverages yet"}</h2>
-            <p>
+          <div className="text-center py-8">
+            <h2 className="text-xl font-serif font-medium text-ink mb-2">
+              {query || menuGroup !== "all" ? "No drinks match" : "No beverages yet"}
+            </h2>
+            <p className="text-sm text-muted mb-4">
               {query
                 ? `Nothing on the menu matches “${debouncedSearch.trim()}”. Try a different word or clear the search.`
                 : menuGroup !== "all"
@@ -184,7 +201,7 @@ export default function Recipes() {
             </p>
             {query || menuGroup !== "all" ? (
               <button
-                className="btn btn-quiet"
+                className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
                 onClick={() => {
                   setSearch("");
                   setMenuGroup("all");
@@ -193,20 +210,25 @@ export default function Recipes() {
                 Clear filters
               </button>
             ) : (
-              <button className="btn btn-primary" onClick={() => setEditing("new")}>
-                <IconPlus size={17} /> Add a beverage
+              <button
+                className="bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+                onClick={() => setEditing("new")}
+              >
+                <IconPlus size={17} className="mr-1.5" /> Add a beverage
               </button>
             )}
           </div>
         ) : (
           <>
             {Object.entries(productGroups).map(([category, items]) => (
-              <div key={category} className="recipe-group">
-                <div className="group-head">
-                  <h2>{category}</h2>
-                  <span className="count-chip">{items.length}</span>
+              <div key={category} className="mb-6">
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <h2 className="text-lg font-serif font-medium text-ink">{category}</h2>
+                  <span className="px-2 py-0.5 bg-surface-2 text-ink-soft rounded text-xs font-medium">
+                    {items.length}
+                  </span>
                 </div>
-                <div className="recipe-grid">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {items.map((product) => (
                     <RecipeCard
                       key={product.id}
@@ -250,17 +272,20 @@ export default function Recipes() {
         subtitle="Past closings keep their snapshot, so history is not affected."
         onClose={() => setPendingDelete(null)}
       >
-        <p className="confirm-copy">
-          <strong>{pendingDelete?.name}</strong>
-          {pendingDelete?.size_label ? ` · ${pendingDelete.size_label}` : ""} will be
+        <p className="text-sm leading-relaxed">
+          <strong className="text-ink">{pendingDelete?.name}</strong>{" "}
+          {pendingDelete?.size_label ? `· ${pendingDelete.size_label}` : ""} will be
           removed from the menu and from future counts.
         </p>
-        <div className="form-actions">
-          <button className="btn btn-quiet" onClick={() => setPendingDelete(null)}>
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
+            onClick={() => setPendingDelete(null)}
+          >
             Keep it
           </button>
           <button
-            className="btn btn-danger"
+            className="bg-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-dark transition-colors focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-2"
             onClick={() => pendingDelete && removeProduct(pendingDelete)}
           >
             Remove beverage
@@ -268,7 +293,11 @@ export default function Recipes() {
         </div>
       </Modal>
 
-      {toast && <div className="toast">{toast}</div>}
+      {toast && (
+        <div className="mt-4 bg-accent-soft text-accent-dark rounded-lg px-3 py-2 text-sm font-medium">
+          {toast}
+        </div>
+      )}
     </>
   );
 }
@@ -293,26 +322,28 @@ function RecipeCard({
   const onTarget = fc !== null && fc <= cost.targetPct;
 
   return (
-    <article className="card recipe-card">
-      <div className="recipe-card-top">
+    <article className="bg-surface border border-line rounded-lg p-4 hover:border-line-strong transition-colors">
+      <div className="flex items-start justify-between gap-3 mb-3">
         <div>
-          <p className="recipe-kicker">{product.category}</p>
-          <h3>{product.name}</h3>
-          <span className="size-tag">
+          <p className="text-xs font-serif font-medium text-ink-soft uppercase tracking-wider">{product.category}</p>
+          <h3 className="text-lg font-serif font-medium text-ink">{product.name}</h3>
+          <span className="text-xs text-muted">
             {product.size_label ? `${product.size_label} · ` : ""}
             Yield {fmt(cost.yieldQty, cost.yieldQty % 1 ? 1 : 0)}
           </span>
         </div>
-        <div className="card-tools">
+        <div className="flex gap-1">
           <button
-            className="icon-btn"
+            type="button"
+            className="p-1.5 hover:bg-surface-2 rounded-sm text-muted hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
             aria-label={`Edit ${product.name}`}
             onClick={onEdit}
           >
             <IconEdit size={16} />
           </button>
           <button
-            className="icon-btn danger"
+            type="button"
+            className="p-1.5 hover:bg-red-soft rounded-sm text-muted hover:text-red focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-1"
             aria-label={`Delete ${product.name}`}
             onClick={onDelete}
           >
@@ -321,74 +352,77 @@ function RecipeCard({
         </div>
       </div>
 
-      <table className="cost-table">
-        <thead>
-          <tr>
-            <th>Ingredient</th>
-            <th>Qty</th>
-            <th>Unit</th>
-            <th>Cost</th>
-          </tr>
-        </thead>
-        <tbody>
-          {cost.lines.length === 0 && (
-            <tr>
-              <td colSpan={4} className="muted">
-                No ingredients on this recipe yet.
-              </td>
+      <div className="overflow-x-auto mb-3">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="text-left">
+              <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider">Ingredient</th>
+              <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Qty</th>
+              <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Unit</th>
+              <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Cost</th>
             </tr>
-          )}
-          {cost.lines.map((line) => {
-            const ingredient = line.ingredient;
-            return (
-              <tr key={line.item.id}>
-                <td>
-                  <span className="cost-ingredient">{line.item.ingredient_name}</span>
-                  <span className="cost-pack">
-                    {ingredient && ingredient.pack_price > 0
-                      ? `${money(ingredient.pack_price)} / ${fmt(ingredient.pack_size)} ${unitLabel(ingredient.unit)}${ingredient.waste_pct ? ` · ${pct(ingredient.waste_pct)}% waste` : ""}`
-                      : "No purchase price"}
-                  </span>
-                </td>
-                <td className="numeric">
-                  {fmt(line.item.qty, line.item.qty % 1 ? 1 : 0)}{" "}
-                  <small>{unitLabel(line.item.unit)}</small>
-                </td>
-                <td className="numeric">{line.missingCost ? "—" : unitMoney(line.unitCost)}</td>
-                <td className="numeric cost-amount">
-                  {line.missingCost ? "—" : money(line.lineCost)}
+          </thead>
+          <tbody>
+            {cost.lines.length === 0 && (
+              <tr>
+                <td colSpan={4} className="pt-2 pb-2 text-muted text-sm">
+                  No ingredients on this recipe yet.
                 </td>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            )}
+            {cost.lines.map((line) => {
+              const ingredient = line.ingredient;
+              return (
+                <tr key={line.item.id} className="border-b border-line/50">
+                  <td className="pb-1">
+                    <span className="font-medium text-ink block">{line.item.ingredient_name}</span>
+                    <span className="text-xs text-muted block">
+                      {ingredient && ingredient.pack_price > 0
+                        ? `${money(ingredient.pack_price)} / ${fmt(ingredient.pack_size)} ${unitLabel(ingredient.unit)}${ingredient.waste_pct ? ` · ${pct(ingredient.waste_pct)}% waste` : ""}`
+                        : "No purchase price"}
+                    </span>
+                  </td>
+                  <td className="pb-1 text-right">
+                    {fmt(line.item.qty, line.item.qty % 1 ? 1 : 0)} <span className="text-xs text-muted"> {unitLabel(line.item.unit)}</span>
+                  </td>
+                  <td className="pb-1 text-right">
+                    {line.missingCost ? "—" : unitMoney(line.unitCost)}
+                  </td>
+                  <td className="pb-1 text-right font-medium text-accent-dark">
+                    {line.missingCost ? "—" : money(line.lineCost)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
-      <div className="cost-block packaging-block">
-        <div className="cost-block-head">
-          <span>Packaging</span>
-          <span>{money(cost.packaging)}</span>
+      <div className="bg-surface-2 border border-line rounded-lg p-3 mb-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Packaging</span>
+          <span className="text-xs font-medium text-accent-dark">{money(cost.packaging)}</span>
         </div>
         {cost.packagingLines.length === 0 ? (
-          <p className="packaging-empty">
+          <p className="text-xs text-muted">
             No packaging selected. Edit this drink to add a cup, lid, straw or bag.
           </p>
         ) : (
-          <table className="cost-table">
+          <table className="w-full text-sm border-collapse">
             <thead>
-              <tr>
-                <th>Material</th>
-                <th>Qty</th>
-                <th>Unit</th>
-                <th>Cost</th>
+              <tr className="text-left">
+                <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider">Material</th>
+                <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Qty</th>
+                <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Unit</th>
+                <th className="pb-1 font-medium text-ink-soft text-[10px] uppercase tracking-wider text-right">Cost</th>
               </tr>
             </thead>
             <tbody>
               {cost.packagingLines.map((line) => (
-                <tr key={line.line.id}>
-                  <td>
-                    <span className="cost-ingredient">{line.line.packaging_name}</span>
-                    <span className="cost-pack">
+                <tr key={line.line.id} className="border-b border-line/50">
+                  <td className="pb-1">
+                    <span className="font-medium text-ink block">{line.line.packaging_name}</span>
+                    <span className="text-xs text-muted block">
                       {line.material
                         ? `${money(line.material.pack_price)} / ${fmt(line.material.pack_size)} ${unitLabel(line.material.unit)}${
                             line.material.description ? ` · ${line.material.description}` : ""
@@ -396,12 +430,15 @@ function RecipeCard({
                         : "No purchase price"}
                     </span>
                   </td>
-                  <td className="numeric">
-                    {fmt(line.line.qty, line.line.qty % 1 ? 1 : 0)}{" "}
-                    <small>{unitLabel(line.line.unit)}</small>
+                  <td className="pb-1 text-right">
+                    {fmt(line.line.qty, line.line.qty % 1 ? 1 : 0)} <span className="text-xs text-muted"> {unitLabel(line.line.unit)}</span>
                   </td>
-                  <td className="numeric">{line.missingCost ? "—" : unitMoney(line.unitCost)}</td>
-                  <td className="numeric cost-amount">{line.missingCost ? "—" : money(line.lineCost)}</td>
+                  <td className="pb-1 text-right">
+                    {line.missingCost ? "—" : unitMoney(line.unitCost)}
+                  </td>
+                  <td className="pb-1 text-right font-medium text-accent-dark">
+                    {line.missingCost ? "—" : money(line.lineCost)}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -410,69 +447,73 @@ function RecipeCard({
       </div>
 
       {cost.missingCosts.length > 0 && (
-        <p className="cost-warning">
+        <p className="text-sm text-red mb-3">
           Costing is incomplete for {cost.missingCosts.join(", ")}. Check the purchase
           prices behind {cost.missingCosts.length === 1 ? "it" : "them"}.
         </p>
       )}
 
-      <dl className="cost-summary">
-        <div>
-          <dt>Food cost</dt>
-          <dd>{money(cost.foodCost)}</dd>
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="flex items-center justify-between px-2 py-1.5 bg-accent-soft rounded-lg">
+          <span className="text-xs text-muted">Food cost</span>
+          <span className="text-xs font-medium text-accent-dark">{money(cost.foodCost)}</span>
         </div>
-        <div>
-          <dt>Cost / portion</dt>
-          <dd>{money(cost.portionCost)}</dd>
+        <div className="flex items-center justify-between px-2 py-1.5 bg-accent-soft rounded-lg">
+          <span className="text-xs text-muted">Cost / portion</span>
+          <span className="text-xs font-medium text-accent-dark">{money(cost.portionCost)}</span>
         </div>
-        <div>
-          <dt>Provision {pct(product.provision_pct)}%</dt>
-          <dd>{money(cost.provision)}</dd>
+        <div className="flex items-center justify-between px-2 py-1.5 bg-accent-soft rounded-lg">
+          <span className="text-xs text-muted">Provision {pct(product.provision_pct)}%</span>
+          <span className="text-xs font-medium text-accent-dark">{money(cost.provision)}</span>
         </div>
-        <div>
-          <dt>Packaging</dt>
-          <dd>{money(cost.packaging)}</dd>
+        <div className="flex items-center justify-between px-2 py-1.5 bg-accent-soft rounded-lg">
+          <span className="text-xs text-muted">Packaging</span>
+          <span className="text-xs font-medium text-accent-dark">{money(cost.packaging)}</span>
         </div>
-        <div className="cost-summary-total">
-          <dt>Standard cost</dt>
-          <dd>{money(cost.standardCost)}</dd>
+        <div className="flex items-center justify-between px-2 py-1.5 bg-surface border border-line rounded-lg">
+          <span className="text-xs text-muted">Standard cost</span>
+          <span className="text-xs font-bold text-ink">{money(cost.standardCost)}</span>
         </div>
-        <div>
-          <dt>Suggested price</dt>
-          <dd>
+        <div className="flex items-center justify-between px-2 py-1.5 bg-surface border border-line rounded-lg">
+          <span className="text-xs text-muted">Suggested price</span>
+          <span className="text-xs font-medium text-accent-dark block">
             {money(cost.suggestedGross)}
-            <small>
+            <span className="text-[10px] text-muted">
               {money(cost.suggestedNet)} before {pct(cost.vatPct)}% VAT
-            </small>
-          </dd>
+            </span>
+          </span>
         </div>
-      </dl>
+      </div>
 
-      <div className="cost-footer">
-        <div className="cost-menu-price">
-          <span className="mini-label">Menu price</span>
-          <strong>
+      <div className="pt-3 border-t border-line flex items-center justify-between">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-muted uppercase tracking-wider text-[10px]">Menu price</span>
+          <span className="text-sm font-bold text-ink">
             {product.selling_price !== null ? money(product.selling_price) : "Not set"}
-          </strong>
+          </span>
         </div>
-        {fc !== null ? (
-          <div className="cost-status">
-            <span className={`pill ${onTarget ? "pill-on-target" : "pill-over"}`}>
-              <span className="pill-dot" />
-              {fmt(fc, 1)}% food cost
-            </span>
-            <span className="cost-margin">
-              {onTarget ? "On" : "Above"} {pct(cost.targetPct)}% target ·{" "}
-              {money(cost.margin ?? 0)} margin
-            </span>
-          </div>
-        ) : (
-          <div className="cost-status">
-            <span className="cost-margin">
+        <div className="flex items-center gap-2">
+          {fc !== null ? (
+            <>
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                onTarget
+                  ? "bg-green-soft text-green"
+                  : "bg-red-soft text-red"
+              }`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
+                {fmt(fc, 1)}% food cost
+              </span>
+              <span className="text-xs text-muted">
+                {onTarget ? "On" : "Above"} {pct(cost.targetPct)}% target ·{" "}
+                {money(cost.margin ?? 0)} margin
+              </span>
+            </>
+          ) : (
+            <span className="text-xs text-muted">
               Target {pct(cost.targetPct)}% · set a menu price to check it
             </span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </article>
   );
@@ -665,30 +706,37 @@ function BeverageModal({
       onClose={onClose}
       wide
     >
-      <form onSubmit={submit} className="form">
-        <div className="form-grid">
-          <label className="field">
-            <span>Beverage name</span>
+      <form onSubmit={submit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Beverage name</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Classic Milk Tea"
               autoFocus
+              className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
             />
-          </label>
-          <label className="field">
-            <span>Size label</span>
-            <input value={size} onChange={(e) => setSize(e.target.value)} placeholder="16 oz" />
-          </label>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Size label</label>
+            <input
+              value={size}
+              onChange={(e) => setSize(e.target.value)}
+              placeholder="16 oz"
+              className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
+            />
+          </div>
         </div>
 
-        <label className="field">
-          <span>Menu group</span>
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Menu group</label>
           <input
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             placeholder="Espresso"
             list="category-options"
+            className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
           />
           <datalist id="category-options">
             <option value="Espresso" />
@@ -698,12 +746,12 @@ function BeverageModal({
             <option value="Tea" />
             <option value="Other" />
           </datalist>
-        </label>
+        </div>
 
-        <div className="recipe-editor">
-          <div className="recipe-editor-head">
-            <span>Ingredients &amp; bases · one batch</span>
-            <span>Batch quantities</span>
+        <div className="border border-line rounded-lg p-3 space-y-3">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Ingredients & bases · one batch</span>
+            <span className="text-xs text-muted">Batch quantities</span>
           </div>
           {lines.map((line, index) => {
             const ingredient = ingredients.find((i) => i.id === Number(line.ingredient_id));
@@ -711,7 +759,7 @@ function BeverageModal({
               (l) => l.item.ingredient_id === Number(line.ingredient_id),
             );
             return (
-              <div className="recipe-editor-row" key={index}>
+              <div key={index} className="flex items-center gap-2">
                 <select
                   value={line.ingredient_id}
                   onChange={(e) =>
@@ -719,6 +767,7 @@ function BeverageModal({
                       ingredient_id: e.target.value === "" ? "" : Number(e.target.value),
                     })
                   }
+                  className="flex-1 bg-surface border border-line rounded-lg px-3 py-2 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
                 >
                   <option value="">Choose ingredient…</option>
                   {ingredients.map((i) => (
@@ -728,7 +777,7 @@ function BeverageModal({
                     </option>
                   ))}
                 </select>
-                <div className="qty-input">
+                <div className="flex items-center gap-2">
                   <input
                     type="number"
                     min="0"
@@ -736,15 +785,18 @@ function BeverageModal({
                     value={line.qty}
                     onChange={(e) => updateLine(index, { qty: e.target.value })}
                     placeholder="0"
+                    className="w-16 bg-surface border border-line rounded-lg px-2 py-2 text-ink text-right focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
                   />
-                  <span>{ingredient ? unitLabel(ingredient.unit) : "—"}</span>
+                  <span className="text-xs text-muted">
+                    {ingredient ? unitLabel(ingredient.unit) : "—"}
+                  </span>
                 </div>
-                <span className="line-cost numeric">
+                <span className="text-xs font-medium text-accent-dark whitespace-nowrap">
                   {costed && !costed.missingCost ? money(costed.lineCost) : "—"}
                 </span>
                 <button
                   type="button"
-                  className="icon-btn danger"
+                  className="p-1 hover:bg-red-soft rounded-sm text-muted hover:text-red focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-1"
                   aria-label="Remove ingredient"
                   onClick={() => setLines((current) => current.filter((_, i) => i !== index))}
                 >
@@ -753,10 +805,10 @@ function BeverageModal({
               </div>
             );
           })}
-          <div className="editor-actions">
+          <div className="flex items-center gap-2 pt-2 border-t border-line">
             <button
               type="button"
-              className="btn btn-quiet btn-sm"
+              className="flex-1 bg-surface border border-line rounded-lg px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
               onClick={() =>
                 setLines((current) => [
                   ...current,
@@ -764,18 +816,21 @@ function BeverageModal({
                 ])
               }
             >
-              <IconPlus size={15} /> Add ingredient
+              <IconPlus size={14} className="mr-1.5" /> Add ingredient
             </button>
-            <Link className="text-link" to="/library">
+            <Link
+              className="text-sm text-accent hover:text-accent-dark underline decoration-accent/30"
+              to="/library"
+            >
               Add a base or ingredient in the library
             </Link>
           </div>
         </div>
 
-        <div className="recipe-editor">
-          <div className="recipe-editor-head">
-            <span>Packaging materials</span>
-            <span>Costed per piece</span>
+        <div className="border border-line rounded-lg p-3 space-y-3">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Packaging materials</span>
+            <span className="text-xs text-muted">Costed per piece</span>
           </div>
           {packLines.map((line, index) => {
             const material = packagingMaterials.find(
@@ -785,7 +840,7 @@ function BeverageModal({
               (row) => row.line.packaging_id === Number(line.packaging_id),
             );
             return (
-              <div className="recipe-editor-row" key={index}>
+              <div key={index} className="flex items-center gap-2">
                 <select
                   value={line.packaging_id}
                   onChange={(e) =>
@@ -793,6 +848,7 @@ function BeverageModal({
                       packaging_id: e.target.value === "" ? "" : Number(e.target.value),
                     })
                   }
+                  className="flex-1 bg-surface border border-line rounded-lg px-3 py-2 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
                 >
                   <option value="">Choose packaging…</option>
                   {packagingMaterials.map((row) => (
@@ -801,7 +857,7 @@ function BeverageModal({
                     </option>
                   ))}
                 </select>
-                <div className="qty-input">
+                <div className="flex items-center gap-2">
                   <input
                     type="number"
                     min="0"
@@ -809,15 +865,18 @@ function BeverageModal({
                     value={line.qty}
                     onChange={(e) => updatePackLine(index, { qty: e.target.value })}
                     placeholder="0"
+                    className="w-16 bg-surface border border-line rounded-lg px-2 py-2 text-ink text-right focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
                   />
-                  <span>{material ? unitLabel(material.unit) : "—"}</span>
+                  <span className="text-xs text-muted">
+                    {material ? unitLabel(material.unit) : "—"}
+                  </span>
                 </div>
-                <span className="line-cost numeric">
+                <span className="text-xs font-medium text-accent-dark whitespace-nowrap">
                   {costed && !costed.missingCost ? money(costed.lineCost) : "—"}
                 </span>
                 <button
                   type="button"
-                  className="icon-btn danger"
+                  className="p-1 hover:bg-red-soft rounded-sm text-muted hover:text-red focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-1"
                   aria-label="Remove packaging"
                   onClick={() =>
                     setPackLines((current) => current.filter((_, i) => i !== index))
@@ -829,9 +888,9 @@ function BeverageModal({
             );
           })}
           {packagingMaterials.length === 0 ? (
-            <p className="editor-hint">
+            <p className="text-xs text-muted">
               No packaging materials yet. Add cups, lids or bags in the{" "}
-              <Link className="text-link" to="/library">
+              <Link className="text-accent hover:text-accent-dark underline decoration-accent/30" to="/library">
                 costing library
               </Link>
               .
@@ -839,7 +898,7 @@ function BeverageModal({
           ) : (
             <button
               type="button"
-              className="btn btn-quiet btn-sm"
+              className="w-full bg-surface border border-line rounded-lg px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
               onClick={() =>
                 setPackLines((current) => [
                   ...current,
@@ -847,29 +906,30 @@ function BeverageModal({
                 ])
               }
             >
-              <IconPlus size={15} /> Add packaging
+              <IconPlus size={14} className="mr-1.5" /> Add packaging
             </button>
           )}
         </div>
 
-        <div className="form-section">
-          <div className="form-section-head">
-            <h3>Costing &amp; price</h3>
-            <p>Prices are in Philippine pesos, the same as the cost sheet.</p>
+        <div className="border border-line rounded-lg p-3 space-y-3">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Costing & price</span>
+            <span className="text-xs text-muted">Prices are in Philippine pesos</span>
           </div>
-          <div className="form-grid three">
-            <label className="field">
-              <span>Yield (servings)</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Yield (servings)</label>
               <input
                 type="number"
                 min="0.01"
                 step="any"
                 value={yieldQty}
                 onChange={(e) => setYieldQty(e.target.value)}
+                className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
               />
-            </label>
-            <label className="field">
-              <span>Provision %</span>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Provision %</label>
               <input
                 type="number"
                 min="0"
@@ -877,10 +937,11 @@ function BeverageModal({
                 step="0.1"
                 value={provision}
                 onChange={(e) => setProvision(e.target.value)}
+                className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
               />
-            </label>
-            <label className="field">
-              <span>Target food cost %</span>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Target food cost %</label>
               <input
                 type="number"
                 min="0.01"
@@ -888,10 +949,11 @@ function BeverageModal({
                 step="0.1"
                 value={targetFc}
                 onChange={(e) => setTargetFc(e.target.value)}
+                className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
               />
-            </label>
-            <label className="field">
-              <span>VAT %</span>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-ink-soft uppercase tracking-wider">VAT %</label>
               <input
                 type="number"
                 min="0"
@@ -899,10 +961,11 @@ function BeverageModal({
                 step="0.1"
                 value={vat}
                 onChange={(e) => setVat(e.target.value)}
+                className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
               />
-            </label>
-            <label className="field">
-              <span>Menu price (incl. VAT)</span>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Menu price (incl. VAT)</label>
               <input
                 type="number"
                 min="0"
@@ -910,20 +973,29 @@ function BeverageModal({
                 value={sellingPrice}
                 onChange={(e) => setSellingPrice(e.target.value)}
                 placeholder="Optional"
+                className="bg-surface border border-line rounded-lg px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
               />
-            </label>
+            </div>
           </div>
         </div>
 
         <CostPreview preview={preview} menuPrice={sellingPrice} />
 
-        {error && <p className="form-error">{error}</p>}
+        {error && <p className="text-sm text-red">{error}</p>}
 
-        <div className="form-actions">
-          <button type="button" className="btn btn-quiet" onClick={onClose}>
+        <div className="flex justify-end gap-2 pt-3 border-t border-line">
+          <button
+            type="button"
+            className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
+            onClick={onClose}
+          >
             Cancel
           </button>
-          <button type="submit" className="btn btn-primary" disabled={saving}>
+          <button
+            type="submit"
+            className="bg-ink text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+            disabled={saving}
+          >
             {saving ? "Saving…" : isNew ? "Add beverage" : "Save changes"}
           </button>
         </div>
@@ -937,50 +1009,52 @@ function CostPreview({ preview, menuPrice }: { preview: RecipeCost; menuPrice: s
   const onTarget = fc !== null && fc <= preview.targetPct;
 
   return (
-    <div className="cost-preview">
-      <div className="cost-preview-head">
-        <span className="mini-label">Live cost sheet</span>
+    <div className="border border-line rounded-lg p-3 space-y-3">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Live cost sheet</span>
         {menuPrice !== "" && fc !== null ? (
-          <span className={`pill ${onTarget ? "pill-on-target" : "pill-over"}`}>
-            <span className="pill-dot" />
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+            onTarget ? "bg-green-soft text-green" : "bg-red-soft text-red"
+          }`}>
+            <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
             {fmt(fc, 1)}% food cost
           </span>
         ) : (
-          <span className="cost-margin">Suggested selling price shown</span>
+          <span className="text-xs text-muted">Suggested selling price shown</span>
         )}
       </div>
-      <div className="cost-preview-grid four">
-        <div>
-          <span>Food cost</span>
-          <strong>{money(preview.foodCost)}</strong>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+        <div className="flex items-center justify-between px-2 py-1.5 bg-surface-2 rounded">
+          <span className="text-xs text-muted">Food cost</span>
+          <strong className="text-xs text-ink">{money(preview.foodCost)}</strong>
         </div>
-        <div>
-          <span>Packaging</span>
-          <strong>{money(preview.packaging)}</strong>
+        <div className="flex items-center justify-between px-2 py-1.5 bg-surface-2 rounded">
+          <span className="text-xs text-muted">Packaging</span>
+          <strong className="text-xs text-ink">{money(preview.packaging)}</strong>
         </div>
-        <div>
-          <span>Per portion</span>
-          <strong>{money(preview.portionCost)}</strong>
+        <div className="flex items-center justify-between px-2 py-1.5 bg-surface-2 rounded">
+          <span className="text-xs text-muted">Per portion</span>
+          <strong className="text-xs text-ink">{money(preview.portionCost)}</strong>
         </div>
-        <div>
-          <span>Provision</span>
-          <strong>{money(preview.provision)}</strong>
+        <div className="flex items-center justify-between px-2 py-1.5 bg-surface-2 rounded">
+          <span className="text-xs text-muted">Provision</span>
+          <strong className="text-xs text-ink">{money(preview.provision)}</strong>
         </div>
-        <div>
-          <span>Standard cost</span>
-          <strong>{money(preview.standardCost)}</strong>
+        <div className="flex items-center justify-between px-2 py-1.5 bg-surface-2 rounded">
+          <span className="text-xs text-muted">Standard cost</span>
+          <strong className="text-xs text-ink">{money(preview.standardCost)}</strong>
         </div>
-        <div>
-          <span>Ex VAT</span>
-          <strong>{money(preview.suggestedNet)}</strong>
+        <div className="flex items-center justify-between px-2 py-1.5 bg-surface-2 rounded">
+          <span className="text-xs text-muted">Ex VAT</span>
+          <strong className="text-xs text-ink">{money(preview.suggestedNet)}</strong>
         </div>
-        <div>
-          <span>Suggested inc. VAT</span>
-          <strong>{money(preview.suggestedGross)}</strong>
+        <div className="flex items-center justify-between px-2 py-1.5 bg-surface-2 rounded">
+          <span className="text-xs text-muted">Suggested inc. VAT</span>
+          <strong className="text-xs text-ink">{money(preview.suggestedGross)}</strong>
         </div>
       </div>
       {preview.missingCosts.length > 0 && (
-        <p className="cost-warning">
+        <p className="text-xs text-red">
           Costing is incomplete for {preview.missingCosts.join(", ")}.
         </p>
       )}

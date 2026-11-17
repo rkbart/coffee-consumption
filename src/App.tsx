@@ -66,50 +66,56 @@ export default function App({ dbReady }: { dbReady: Promise<void> }) {
   }, [dbReady]);
 
   return (
-    <div className="app-shell" data-currency={currency}>
-      <aside className="sidebar">
-        <div className="brand">
+    <div className="flex h-screen bg-bg text-ink" data-currency={currency}>
+      <aside className="w-64 bg-surface border-r border-line flex flex-col">
+        <div className="p-5 brand">
           <span className="brand-mark">
             <IconCoffee size={21} />
           </span>
-          <span className="brand-text">
-            <strong>Brew Ledger</strong>
-            <small>Inventory variance</small>
+          <span className="brand-text block ml-2">
+            <strong className="text-lg font-serif text-ink">Brew Ledger</strong>
+            <small className="text-muted">Inventory variance</small>
           </span>
         </div>
 
-        <nav className="nav" aria-label="Main">
+        <nav className="flex-1 px-3 py-2 nav" aria-label="Main">
           {links.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}
               end={end}
-              className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isActive
+                    ? "bg-accent-soft text-accent-dark"
+                    : "text-ink-soft hover:bg-surface-2 hover:text-ink"
+                }`
+              }
             >
-              <Icon size={18} />
+              <Icon size={18} className="shrink-0" />
               <span>{label}</span>
             </NavLink>
           ))}
         </nav>
 
-        <div className="sidebar-card">
-          <p className="sidebar-card-title">The daily habit</p>
-          <p>
+        <div className="p-5 sidebar-card">
+          <p className="font-serif font-medium text-ink mb-1">The daily habit</p>
+          <p className="text-sm text-muted leading-relaxed">
             Count what is left, log what you sold, and let the recipes tell you what
             should have been used.
           </p>
         </div>
 
-        <div className="sidebar-foot">
-          <span className="dot" />
-          SQLite · {currency}
+        <div className="p-4 sidebar-foot border-t border-line flex items-center gap-2 text-xs text-muted">
+          <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+          <span>SQLite · {currency}</span>
         </div>
       </aside>
 
-      <main className="main">
+      <main className="flex-1 overflow-y-auto bg-bg">
         {dbError ? (
-          <div style={{ padding: "1rem", color: "red", fontFamily: "system-ui, sans-serif" }}>
-            <p>Something went wrong setting up the app: {dbError}</p>
+          <div className="p-6 bg-red-soft border border-red rounded-lg">
+            <p className="text-red">Something went wrong setting up the app: {dbError}</p>
           </div>
         ) : (
           <Routes>
@@ -180,9 +186,9 @@ export default function App({ dbReady }: { dbReady: Promise<void> }) {
             <Route
               path="*"
               element={
-                <div className="empty-state page-enter">
-                  <h2>Page not found</h2>
-                  <p>The page you were looking for is not on the menu.</p>
+                <div className="p-12 text-center">
+                  <h2 className="text-2xl font-serif font-medium text-ink">Page not found</h2>
+                  <p className="mt-1 text-muted">The page you were looking for is not on the menu.</p>
                 </div>
               }
             />
