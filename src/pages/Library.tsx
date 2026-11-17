@@ -269,105 +269,103 @@ export default function Library() {
               </div>
             ) : (
               <>
-                <div className="packaging-table">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th scope="col">Material</th>
-                        <th scope="col">Brand / notes</th>
-                        <th scope="col" className="numeric">Pack price</th>
-                        <th scope="col" className="numeric">Pack size</th>
-                        <th scope="col" className="numeric">Price / piece</th>
-                        <th scope="col" className="numeric">Qty / drink</th>
-                        <th scope="col" className="numeric cost-amount">Cost / drink</th>
-                        <th scope="col">Unit</th>
-                        <th scope="col" className="packaging-actions-col" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pagedPackaging.map((material) => {
-                        const unitCost = packagingUnitCost(material);
-                        const totalCost = packagingTotalCost(material);
-                        return (
-                          <tr key={material.id} className="packaging-row" data-id={material.id}>
-                            <td>
-                              <button
-                                type="button"
-                                className="packaging-name-link"
-                                onClick={() => setPackagingModal(material)}
-                              >
-                                <span className="ingredient-name">{material.name}</span>
-                              </button>
-                            </td>
-                            <td className="muted small">
-                              {material.description || "—"}
-                            </td>
-                            <td className="numeric">
-                              {material.pack_price > 0
-                                ? money(material.pack_price)
-                                : "—"}
-                            </td>
-                            <td className="numeric">
-                              {fmt(material.pack_size)}
-                            </td>
-                            <td className="numeric">
-                              {unitCost !== null ? unitMoney(unitCost) : "—"}
-                            </td>
-                            <td className="numeric">
-                              {fmt(material.qty_needed)}
-                            </td>
-                            <td className="numeric cost-amount">
-                              {totalCost !== null ? money(totalCost) : "—"}
-                            </td>
-                            <td className="unit-chip">
+                <div className="packaging-list">
+                  {pagedPackaging.map((material) => {
+                    const unitCost = packagingUnitCost(material);
+                    const totalCost = packagingTotalCost(material);
+                    return (
+                      <article
+                        key={material.id}
+                        className="packaging-card"
+                        data-id={material.id}
+                      >
+                        <div className="packaging-card-main">
+                          <div className="packaging-card-head">
+                            <button
+                              type="button"
+                              className="packaging-name-link"
+                              onClick={() => setPackagingModal(material)}
+                            >
+                              <span className="ingredient-name">{material.name}</span>
+                            </button>
+                            <span className="unit-badge">
                               {unitLabel(material.unit)}
-                            </td>
-                            <td className="packaging-actions-col">
-                              <button
-                                type="button"
-                                className="icon-btn"
-                                aria-label={`Edit ${material.name}`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setPackagingModal(material);
-                                }}
-                              >
-                                <IconEdit size={15} />
-                              </button>
-                              <button
-                                type="button"
-                                className="icon-btn danger"
-                                aria-label={`Delete ${material.name}`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setPendingDelete(material);
-                                }}
-                              >
-                                <IconTrash size={15} />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                  <tfoot>
-                    <tr className="packaging-totals">
-                      <td colSpan={7} className="label">
-                        Total packaging cost per drink:
-                      </td>
-                      <td className="numeric total">
-                        {money(
-                          pagedPackaging.reduce(
-                            (sum, m) => sum + (packagingTotalCost(m) ?? 0),
-                            0,
-                          ),
-                        )}
-                      </td>
-                      <td />
-                      <td />
-                    </tr>
-                  </tfoot>
+                            </span>
+                          </div>
+                          {material.description && (
+                            <p className="packaging-card-desc muted small">
+                              {material.description}
+                            </p>
+                          )}
+                          <div className="packaging-card-meta">
+                            <span className="meta-item">
+                              <span className="meta-label">Pack price</span>
+                              <span className="meta-value">
+                                {material.pack_price > 0
+                                  ? money(material.pack_price)
+                                  : "—"}
+                              </span>
+                            </span>
+                            <span className="meta-item">
+                              <span className="meta-label">Price / unit</span>
+                              <span className="meta-value">
+                                {unitCost !== null
+                                  ? unitMoney(unitCost)
+                                  : "—"}
+                              </span>
+                            </span>
+                            <span className="meta-item">
+                              <span className="meta-label">Qty / drink</span>
+                              <span className="meta-value">
+                                {fmt(material.qty_needed)}
+                              </span>
+                            </span>
+                            <span className="meta-item cost-amount">
+                              <span className="meta-label">Cost / drink</span>
+                              <span className="meta-value">
+                                {totalCost !== null ? money(totalCost) : "—"}
+                              </span>
+                            </span>
+                          </div>
+                        </div>
+                        <div className="packaging-card-actions">
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            aria-label={`Edit ${material.name}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPackagingModal(material);
+                            }}
+                          >
+                            <IconEdit size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            className="icon-btn danger"
+                            aria-label={`Delete ${material.name}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPendingDelete(material);
+                            }}
+                          >
+                            <IconTrash size={15} />
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+                <div className="packaging-totals-bar">
+                  <span className="label">Total packaging cost per drink:</span>
+                  <span className="total">
+                    {money(
+                      pagedPackaging.reduce(
+                        (sum, m) => sum + (packagingTotalCost(m) ?? 0),
+                        0,
+                      ),
+                    )}
+                  </span>
                 </div>
                 <Pagination
                   page={safePage}
