@@ -10,5 +10,7 @@
   "transition": 300,
   "breakpoints": [375, 768, 1280],
   "wait": 1200,
-  "select": "viewport"
+  "select": "viewport",
+  "url": "http://localhost:5173",
+  "routes": ["/", "/library", "/recipes", "/settings", "/report", "/history", "/inventory"]
 }

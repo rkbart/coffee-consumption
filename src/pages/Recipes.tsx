@@ -6,7 +6,7 @@ import Pagination from "../components/Pagination";
 import SearchField from "../components/SearchField";
 import { useDebouncedValue } from "../hooks";
 import { api, type ProductInput } from "../api";
-import type { Ingredient, PackagingMaterial, Product, Unit } from "../types";
+import type { Ingredient, PackagingSet, Product, Unit } from "../types";
 import {
   fmt,
   money,
@@ -23,7 +23,7 @@ interface IngredientDraftLine {
 }
 
 interface PackagingDraftLine {
-  packaging_id: number | "";
+  packaging_set_id: number | "";
   qty: string;
 }
 
@@ -36,7 +36,7 @@ const matchesQuery = (query: string, values: (string | number | null | undefined
 
 export default function Recipes() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [packaging, setPackaging] = useState<PackagingMaterial[]>([]);
+  const [packagingSets, setPackagingSets] = useState<PackagingSet[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -51,13 +51,13 @@ export default function Recipes() {
 
   const load = async () => {
     try {
-      const [nextIngredients, nextPackaging, nextProducts] = await Promise.all([
+      const [nextIngredients, nextSets, nextProducts] = await Promise.all([
         api.ingredients(),
-        api.packaging(),
+        api.packagingSets(),
         api.products(),
       ]);
       setIngredients(nextIngredients);
-      setPackaging(nextPackaging);
+      setPackagingSets(nextSets);
       setProducts(nextProducts);
       setError("");
     } catch (err) {
@@ -93,7 +93,7 @@ export default function Recipes() {
             product.category,
             product.size_label,
             ...product.recipe.map((line) => line.ingredient_name),
-            ...product.packaging.map((line) => line.packaging_name),
+            ...product.packaging.map((line) => line.packaging_set_name),
           ]),
       ),
     [products, query, menuGroup],
@@ -212,7 +212,7 @@ export default function Recipes() {
                       key={product.id}
                       product={product}
                       ingredients={ingredients}
-                      packagingMaterials={packaging}
+                      packagingSets={packagingSets}
                       onEdit={() => setEditing(product)}
                       onDelete={() => setPendingDelete(product)}
                     />
@@ -235,7 +235,7 @@ export default function Recipes() {
       <BeverageModal
         editing={editing}
         ingredients={ingredients}
-        packagingMaterials={packaging}
+        packagingSets={packagingSets}
         onClose={() => setEditing(null)}
         onSaved={async (message) => {
           setEditing(null);
@@ -278,17 +278,17 @@ export default function Recipes() {
 function RecipeCard({
   product,
   ingredients,
-  packagingMaterials,
+  packagingSets,
   onEdit,
   onDelete,
 }: {
   product: Product;
   ingredients: Ingredient[];
-  packagingMaterials: PackagingMaterial[];
+  packagingSets: PackagingSet[];
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const cost = recipeCost(product, ingredients, packagingMaterials);
+  const cost = recipeCost(product, ingredients, packagingSets);
   const fc = cost.actualFoodCostPct;
   const onTarget = fc !== null && fc <= cost.targetPct;
 
@@ -371,43 +371,46 @@ function RecipeCard({
         </div>
         {cost.packagingLines.length === 0 ? (
           <p className="packaging-empty">
-            No packaging selected. Edit this drink to add a cup, lid, straw or bag.
+            No packaging selected. Edit this drink to add a cup, lid, straw or bag set.
           </p>
         ) : (
           <table className="cost-table">
             <thead>
               <tr>
-                <th>Material</th>
+                <th>Set</th>
+                <th>Items</th>
                 <th>Qty</th>
-                <th>Unit</th>
                 <th>Cost</th>
               </tr>
             </thead>
             <tbody>
-              {cost.packagingLines.map((line) => (
-                <tr key={line.line.id}>
-                  <td>
-                    <span className="cost-ingredient">
-                      {line.line.packaging_name}
-                    </span>
-                    <span className="cost-pack">
-                      {line.material
-                        ? `${money(line.material.pack_price)} / ${fmt(line.material.pack_size)} ${unitLabel(line.material.unit)}`
-                        : "No purchase price"}
-                    </span>
-                  </td>
-                  <td className="numeric">
-                    {fmt(line.line.qty, line.line.qty % 1 ? 1 : 0)}{" "}
-                    <small>{unitLabel(line.line.unit)}</small>
-                  </td>
-                  <td className="numeric">
-                    {line.missingCost ? "—" : unitMoney(line.unitCost)}
-                  </td>
-                  <td className="numeric cost-amount">
-                    {line.missingCost ? "—" : money(line.lineCost)}
-                  </td>
-                </tr>
-              ))}
+              {cost.packagingLines.map((line) => {
+                const set = line.set;
+                return (
+                  <tr key={line.line.id}>
+                    <td>
+                      <span className="cost-ingredient">
+                        {line.line.packaging_set_name}
+                      </span>
+                      {set && (
+                        <span className="cost-pack">
+                          {set.items.map((i) => `${i.qty_needed}× ${i.packaging_name}`).join(", ")}
+                        </span>
+                      )}
+                    </td>
+                    <td className="numeric">
+                      {fmt(line.line.qty, line.line.qty % 1 ? 1 : 0)}
+                      <small>sets</small>
+                    </td>
+                    <td className="numeric">
+                      {line.missingCost ? "—" : unitMoney(line.setUnitCost)}
+                    </td>
+                    <td className="numeric cost-amount">
+                      {line.missingCost ? "—" : money(line.lineCost)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -487,13 +490,13 @@ function RecipeCard({
 function BeverageModal({
   editing,
   ingredients,
-  packagingMaterials,
+  packagingSets,
   onClose,
   onSaved,
 }: {
   editing: Product | "new" | null;
   ingredients: Ingredient[];
-  packagingMaterials: PackagingMaterial[];
+  packagingSets: PackagingSet[];
   onClose: () => void;
   onSaved: (message: string) => void;
 }) {
@@ -529,7 +532,7 @@ function BeverageModal({
     setPackLines(
       product
         ? product.packaging.map((line) => ({
-            packaging_id: line.packaging_id,
+            packaging_set_id: line.packaging_set_id,
             qty: String(line.qty),
           }))
         : [],
@@ -544,7 +547,7 @@ function BeverageModal({
         : "",
     );
     setError("");
-  }, [editing, ingredients, packagingMaterials, product]);
+  }, [editing, ingredients, packagingSets, product]);
 
   const updateLine = (index: number, patch: Partial<IngredientDraftLine>) => {
     setLines((current) =>
@@ -573,17 +576,14 @@ function BeverageModal({
     });
 
   const draftPackaging = packLines
-    .filter((line) => line.packaging_id !== "")
+    .filter((line) => line.packaging_set_id !== "")
     .map((line, index) => {
-      const material = packagingMaterials.find(
-        (row) => row.id === Number(line.packaging_id),
-      );
+      const set = packagingSets.find((s) => s.id === Number(line.packaging_set_id));
       return {
         id: index,
         product_id: product?.id ?? 0,
-        packaging_id: Number(line.packaging_id),
-        packaging_name: material?.name ?? "Packaging",
-        unit: (material?.unit ?? "pcs") as Unit,
+        packaging_set_id: Number(line.packaging_set_id),
+        packaging_set_name: set?.name ?? "Packaging set",
         qty: Number(line.qty) || 0,
       };
     });
@@ -602,7 +602,7 @@ function BeverageModal({
     recipe: draftRecipe,
     packaging: draftPackaging,
   };
-  const preview = recipeCost(draftProduct, ingredients, packagingMaterials);
+  const preview = recipeCost(draftProduct, ingredients, packagingSets);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -615,18 +615,18 @@ function BeverageModal({
       .map((line) => ({ ingredient_id: line.ingredient_id, qty: line.qty }));
     const packagingLines = draftPackaging
       .filter((line) => line.qty > 0)
-      .map((line) => ({ packaging_id: line.packaging_id, qty: line.qty }));
+      .map((line) => ({ packaging_set_id: line.packaging_set_id, qty: line.qty }));
 
-    if (recipe.length === 0) {
-      setError("Add at least one ingredient with a quantity.");
+    if (new Set(packagingLines.map((l) => l.packaging_set_id)).size !== packagingLines.length) {
+      setError("Each packaging set can only appear once.");
       return;
     }
     if (new Set(recipe.map((l) => l.ingredient_id)).size !== recipe.length) {
       setError("Each ingredient can only appear once.");
       return;
     }
-    if (new Set(packagingLines.map((l) => l.packaging_id)).size !== packagingLines.length) {
-      setError("Each packaging material can only appear once.");
+    if (new Set(packagingLines.map((l) => l.packaging_set_id)).size !== packagingLines.length) {
+      setError("Each packaging set can only appear once.");
       return;
     }
     if (!(Number(yieldQty) > 0)) {
@@ -778,28 +778,25 @@ function BeverageModal({
 
         <div className="recipe-editor">
           <div className="recipe-editor-head">
-            <span>Packaging materials</span>
-            <span>Costed per piece</span>
+            <span>Packaging sets</span>
+            <span>Costed per set</span>
           </div>
           {packLines.map((line, index) => {
-            const material = packagingMaterials.find(
-              (row) => row.id === Number(line.packaging_id),
-            );
             const costed = preview.packagingLines.find(
-              (row) => row.line.packaging_id === Number(line.packaging_id),
+              (row) => row.line.packaging_set_id === Number(line.packaging_set_id),
             );
             return (
               <div className="recipe-editor-row" key={index}>
                 <select
-                  value={line.packaging_id}
+                  value={line.packaging_set_id}
                   onChange={(e) =>
                     updatePackLine(index, {
-                      packaging_id: e.target.value === "" ? "" : Number(e.target.value),
+                      packaging_set_id: e.target.value === "" ? "" : Number(e.target.value),
                     })
                   }
                 >
-                  <option value="">Choose packaging…</option>
-                  {packagingMaterials.map((row) => (
+                  <option value="">Choose packaging set…</option>
+                  {packagingSets.map((row) => (
                     <option key={row.id} value={row.id}>
                       {row.name}
                     </option>
@@ -814,7 +811,7 @@ function BeverageModal({
                     onChange={(e) => updatePackLine(index, { qty: e.target.value })}
                     placeholder="0"
                   />
-                  <span>{material ? unitLabel(material.unit) : "—"}</span>
+                  <span>sets</span>
                 </div>
                 <span className="line-cost numeric">
                   {costed && !costed.missingCost ? money(costed.lineCost) : "—"}
@@ -822,7 +819,7 @@ function BeverageModal({
                 <button
                   type="button"
                   className="icon-btn danger"
-                  aria-label="Remove packaging"
+                  aria-label="Remove packaging set"
                   onClick={() =>
                     setPackLines((current) => current.filter((_, i) => i !== index))
                   }
@@ -832,9 +829,9 @@ function BeverageModal({
               </div>
             );
           })}
-          {packagingMaterials.length === 0 ? (
+          {packagingSets.length === 0 ? (
             <p className="editor-hint">
-              No packaging materials yet. Add cups, lids or bags in the{" "}
+              No packaging sets yet. Add sets in the{" "}
               <Link className="text-link" to="/library">
                 costing library
               </Link>
@@ -847,11 +844,11 @@ function BeverageModal({
               onClick={() =>
                 setPackLines((current) => [
                   ...current,
-                  { packaging_id: packagingMaterials[0]?.id ?? "", qty: "1" },
+                  { packaging_set_id: packagingSets[0]?.id ?? "", qty: "1" },
                 ])
               }
             >
-              <IconPlus size={15} /> Add packaging
+              <IconPlus size={15} /> Add packaging set
             </button>
           )}
         </div>

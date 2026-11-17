@@ -5,10 +5,11 @@ import SearchField from "../components/SearchField";
 import {
   IngredientModal,
   PackagingModal,
+  PackagingSetModal,
 } from "../components/LibraryModals";
 import { useDebouncedValue } from "../hooks";
 import { api } from "../api";
-import type { Ingredient, PackagingMaterial } from "../types";
+import type { Ingredient, PackagingMaterial, PackagingSet } from "../types";
 import { fmt, money, unitLabel, unitMoney } from "../lib";
 import { IconCoffee, IconMilk, IconPlus } from "../components/Icons";
 
@@ -22,30 +23,42 @@ const packagingUnitCost = (material: PackagingMaterial) => {
   return material.pack_price > 0 && net > 0 ? material.pack_price / net : null;
 };
 
+const setUnitCost = (set: PackagingSet) => {
+  return set.items.reduce((sum, item) => {
+    const net = item.pack_size * (1 - (item.waste_pct || 0) / 100);
+    const itemUnitCost = item.pack_price > 0 && net > 0 ? item.pack_price / net : 0;
+    return sum + itemUnitCost * item.qty_needed;
+  }, 0);
+};
+
 export default function Library() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [packaging, setPackaging] = useState<PackagingMaterial[]>([]);
+  const [packagingSets, setPackagingSets] = useState<PackagingSet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search, 250);
-  const [tab, setTab] = useState<"ingredients" | "packaging">("ingredients");
+  const [tab, setTab] = useState<"ingredients" | "packaging" | "sets">("ingredients");
   const [page, setPage] = useState(1);
 
   const [ingredientModal, setIngredientModal] = useState<Ingredient | "new" | null>(null);
   const [packagingModal, setPackagingModal] = useState<PackagingMaterial | "new" | null>(
     null,
   );
+  const [setModal, setSetModal] = useState<PackagingSet | "new" | null>(null);
   const [toast, setToast] = useState("");
 
   const load = async () => {
     try {
-      const [nextIngredients, nextPackaging] = await Promise.all([
+      const [nextIngredients, nextPackaging, nextSets] = await Promise.all([
         api.ingredients(),
         api.packaging(),
+        api.packagingSets(),
       ]);
       setIngredients(nextIngredients);
       setPackaging(nextPackaging);
+      setPackagingSets(nextSets);
       setError("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load the costing library");
@@ -82,17 +95,28 @@ export default function Library() {
     [packaging, query],
   );
 
+  const filteredSets = useMemo(
+    () =>
+      packagingSets.filter((set) =>
+        matchesQuery(query, [set.name, set.description, ...set.items.map((i) => i.packaging_name)]),
+      ),
+    [packagingSets, query],
+  );
+
   useEffect(() => {
     setPage(1);
   }, [query, tab]);
 
   const activeTotal =
-    tab === "ingredients" ? filteredIngredients.length : filteredPackaging.length;
+    tab === "ingredients" ? filteredIngredients.length
+    : tab === "packaging" ? filteredPackaging.length
+    : filteredSets.length;
   const pageCount = Math.max(1, Math.ceil(activeTotal / PER_PAGE));
   const safePage = Math.min(page, pageCount);
   const start = (safePage - 1) * PER_PAGE;
   const pagedIngredients = filteredIngredients.slice(start, start + PER_PAGE);
   const pagedPackaging = filteredPackaging.slice(start, start + PER_PAGE);
+  const pagedSets = filteredSets.slice(start, start + PER_PAGE);
 
   const ingredientGroups = pagedIngredients.reduce<Record<string, Ingredient[]>>(
     (acc, ingredient) => {
@@ -102,7 +126,7 @@ export default function Library() {
     {},
   );
 
-  const totalMatches = filteredIngredients.length + filteredPackaging.length;
+  const totalMatches = filteredIngredients.length + filteredPackaging.length + filteredSets.length;
 
   return (
     <>
@@ -113,13 +137,13 @@ export default function Library() {
         actions={
           <button
             className="btn btn-primary"
-            onClick={() =>
-              tab === "ingredients"
-                ? setIngredientModal("new")
-                : setPackagingModal("new")
-            }
+            onClick={() => {
+              if (tab === "ingredients") setIngredientModal("new");
+              else if (tab === "packaging") setPackagingModal("new");
+              else setSetModal("new");
+            }}
           >
-            <IconPlus size={17} /> Add {tab === "ingredients" ? "ingredient" : "packaging"}
+            <IconPlus size={17} /> Add {tab === "ingredients" ? "ingredient" : tab === "packaging" ? "packaging" : "set"}
           </button>
         }
       />
@@ -130,13 +154,13 @@ export default function Library() {
         <SearchField
           value={search}
           onChange={setSearch}
-          placeholder="Search ingredients, bases, groups, packaging…"
+          placeholder="Search ingredients, bases, groups, packaging, sets…"
           label="Search the costing library"
         />
         <p className="search-summary" aria-live="polite">
           {query
             ? `${totalMatches} result${totalMatches === 1 ? "" : "s"} for “${debouncedSearch.trim()}”`
-            : `${ingredients.length} ingredients · ${packaging.length} packaging materials`}
+            : `${ingredients.length} ingredients · ${packaging.length} packaging · ${packagingSets.length} sets`}
         </p>
       </div>
 
@@ -163,14 +187,24 @@ export default function Library() {
               <IconMilk size={15} /> Packaging
               <span className="tab-count">{filteredPackaging.length}</span>
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === "sets"}
+              className={tab === "sets" ? "active" : ""}
+              onClick={() => setTab("sets")}
+            >
+              <IconPlus size={15} /> Sets
+              <span className="tab-count">{filteredSets.length}</span>
+            </button>
           </div>
           <button
             className="btn btn-quiet btn-sm"
-            onClick={() =>
-              tab === "ingredients"
-                ? setIngredientModal("new")
-                : setPackagingModal("new")
-            }
+            onClick={() => {
+              if (tab === "ingredients") setIngredientModal("new");
+              else if (tab === "packaging") setPackagingModal("new");
+              else setSetModal("new");
+            }}
           >
             <IconPlus size={15} /> Add
           </button>
@@ -179,7 +213,9 @@ export default function Library() {
         <p className="muted panel-note">
           {tab === "ingredients"
             ? "Pack price is spread across the pack size, net of waste. For a base you make yourself, use the batch cost and batch yield."
-            : "Cups, lids, straws and bags are costed per piece and selected on each recipe."}
+            : tab === "packaging"
+              ? "Cups, lids, straws and bags are costed per piece. These are the building blocks for sets."
+              : "A set is a group of packaging materials used together on one drink — e.g. a 16 oz cup, lid and straw. The set total is added to each recipe."}
         </p>
 
         {loading ? (
@@ -197,52 +233,54 @@ export default function Library() {
                 </button>
               </div>
             ) : (
-              Object.entries(ingredientGroups).map(([category, rows]) => (
-                <div className="ingredient-group" key={category}>
-                  <p className="mini-label">{category}</p>
-                  {rows.map((ingredient) => {
-                    const net =
-                      ingredient.pack_size * (1 - (ingredient.waste_pct || 0) / 100);
-                    const unitCost =
-                      ingredient.pack_price > 0 && net > 0
-                        ? ingredient.pack_price / net
-                        : null;
-                    return (
-                      <button
-                        key={ingredient.id}
-                        className="ingredient-row library-row"
-                        onClick={() => setIngredientModal(ingredient)}
-                      >
-                        <span
-                          className={`ingredient-dot ${
-                            ingredient.unit === "g"
-                              ? "coffee"
-                              : ingredient.unit === "ml"
-                                ? "milk"
-                                : "other"
-                          }`}
-                        />
-                        <span className="ingredient-copy">
-                          <span className="ingredient-name">{ingredient.name}</span>
-                          <span className="ingredient-price">
-                            {ingredient.pack_price > 0
-                              ? `${money(ingredient.pack_price)} / ${fmt(ingredient.pack_size)} ${unitLabel(ingredient.unit)}`
-                              : "Add a purchase price"}
+              <>
+                {Object.entries(ingredientGroups).map(([category, rows]) => (
+                  <div className="ingredient-group" key={category}>
+                    <p className="mini-label">{category}</p>
+                    {rows.map((ingredient) => {
+                      const net =
+                        ingredient.pack_size * (1 - (ingredient.waste_pct || 0) / 100);
+                      const unitCost =
+                        ingredient.pack_price > 0 && net > 0
+                          ? ingredient.pack_price / net
+                          : null;
+                      return (
+                        <button
+                          key={ingredient.id}
+                          className="ingredient-row library-row"
+                          onClick={() => setIngredientModal(ingredient)}
+                        >
+                          <span
+                            className={`ingredient-dot ${
+                              ingredient.unit === "g"
+                                ? "coffee"
+                                : ingredient.unit === "ml"
+                                  ? "milk"
+                                  : "other"
+                            }`}
+                          />
+                          <span className="ingredient-copy">
+                            <span className="ingredient-name">{ingredient.name}</span>
+                            <span className="ingredient-price">
+                              {ingredient.pack_price > 0
+                                ? `${money(ingredient.pack_price)} / ${fmt(ingredient.pack_size)} ${unitLabel(ingredient.unit)}`
+                                : "Add a purchase price"}
+                            </span>
                           </span>
-                        </span>
-                        <span className="unit-chip">
-                          {unitCost !== null
-                            ? `${unitMoney(unitCost)}/${unitLabel(ingredient.unit)}`
-                            : unitLabel(ingredient.unit)}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              ))
+                          <span className="unit-chip">
+                            {unitCost !== null
+                              ? `${unitMoney(unitCost)}/${unitLabel(ingredient.unit)}`
+                              : unitLabel(ingredient.unit)}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+              </>
             )}
           </>
-        ) : (
+        ) : tab === "packaging" ? (
           <>
             {filteredPackaging.length === 0 ? (
               <div className="library-empty">
@@ -284,6 +322,53 @@ export default function Library() {
               </div>
             )}
           </>
+        ) : (
+          <>
+            {filteredSets.length === 0 ? (
+              <div className="library-empty">
+                <p>{query ? "No packaging sets match this search." : "No packaging sets yet."}</p>
+                <p className="muted">Create a set, then add cups, lids, straws or bags to it.</p>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => (query ? setSearch("") : setSetModal("new"))}
+                >
+                  {query ? "Clear search" : "Add the first set"}
+                </button>
+              </div>
+            ) : (
+              <div className="set-group">
+                {pagedSets.map((set) => {
+                  const cost = setUnitCost(set);
+                  return (
+                    <button
+                      key={set.id}
+                      className="set-row library-row"
+                      onClick={() => setSetModal(set)}
+                    >
+                      <span className="set-dot" />
+                      <span className="set-copy">
+                        <span className="set-name">{set.name}</span>
+                        {set.description && (
+                          <span className="set-desc">{set.description}</span>
+                        )}
+                        <span className="set-items">
+                          {set.items.map((item) => (
+                            <span key={item.id} className="set-item-chip">
+                              {item.qty_needed}× {item.packaging_name}
+                              {item.notes ? ` · ${item.notes}` : ""}
+                            </span>
+                          ))}
+                        </span>
+                        <span className="set-cost">
+                          {cost > 0 ? money(cost) : "Add prices to cost"}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
 
         <Pagination
@@ -292,7 +377,7 @@ export default function Library() {
           total={activeTotal}
           pageSize={PER_PAGE}
           onPageChange={setPage}
-          label={tab === "ingredients" ? "ingredients" : "materials"}
+          label={tab === "ingredients" ? "ingredients" : tab === "packaging" ? "materials" : "sets"}
         />
       </section>
 
@@ -311,6 +396,17 @@ export default function Library() {
         onClose={() => setPackagingModal(null)}
         onSaved={async (message) => {
           setPackagingModal(null);
+          setToast(message);
+          await load();
+        }}
+      />
+
+      <PackagingSetModal
+        editing={setModal}
+        materials={packaging}
+        onClose={() => setSetModal(null)}
+        onSaved={async (message) => {
+          setSetModal(null);
           setToast(message);
           await load();
         }}
