@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./styles.css";
-import { migrationsReady, dbError } from "./db/client";
+import { migrationsReady } from "./db/client";
 import { seed } from "./db/seed";
 
 const BOOT_TIMEOUT_MS = 60_000;
@@ -25,21 +25,17 @@ function showError(msg: string) {
   `;
 }
 
-if (dbError) {
-  showError(dbError);
-} else {
-  Promise.race([boot(), timeout])
-    .then(() => {
-      sessionStorage.removeItem("route-error:auto-reloaded");
-      createRoot(document.getElementById("root")!).render(
-        <StrictMode>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
-        </StrictMode>,
-      );
-    })
-    .catch((err) => {
-      showError((err as Error).message);
-    });
-}
+Promise.race([boot(), timeout])
+  .then(() => {
+    sessionStorage.removeItem("route-error:auto-reloaded");
+    createRoot(document.getElementById("root")!).render(
+      <StrictMode>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </StrictMode>,
+    );
+  })
+  .catch((err) => {
+    showError((err as Error).message);
+  });
