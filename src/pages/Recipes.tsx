@@ -656,6 +656,7 @@ function BeverageModal({
       onSaved(product ? `${body.name} updated` : `${body.name} added to the menu`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save beverage");
+    } finally {
       setSaving(false);
     }
   };

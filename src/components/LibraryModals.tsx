@@ -72,6 +72,7 @@ export function IngredientModal({
       onSaved(ingredient ? `${body.name} updated` : `${body.name} added`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save ingredient");
+    } finally {
       setSaving(false);
     }
   };
@@ -273,6 +274,7 @@ export function PackagingModal({
       onSaved(material ? `${body.name} updated` : `${body.name} added`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save packaging");
+    } finally {
       setSaving(false);
     }
   };
