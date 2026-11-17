@@ -173,4 +173,83 @@ SELECT id, name, description, unit, pack_price, pack_size, qty_needed,
 FROM packaging;
 `,
   },
+  {
+    id: '0002_packaging_set_name',
+    sql: `
+CREATE TABLE packaging_sets (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  packaging_name TEXT NOT NULL,
+  description   TEXT NOT NULL DEFAULT '',
+  sort_order    INTEGER NOT NULL DEFAULT 0
+);
+
+--> statement-breakpoint
+
+INSERT INTO packaging_sets (id, packaging_name, description, sort_order)
+SELECT id, name, description, sort_order FROM packaging;
+
+--> statement-breakpoint
+
+CREATE TABLE packaging_components_v2 (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  packaging_id INTEGER NOT NULL REFERENCES packaging_sets(id) ON DELETE CASCADE,
+  name         TEXT NOT NULL,
+  description  TEXT NOT NULL DEFAULT '',
+  unit         TEXT NOT NULL DEFAULT 'pcs',
+  pack_price   REAL NOT NULL DEFAULT 0,
+  pack_size    REAL NOT NULL DEFAULT 1,
+  qty_needed   REAL NOT NULL DEFAULT 1,
+  waste_pct    REAL NOT NULL DEFAULT 0,
+  sort_order   INTEGER NOT NULL DEFAULT 0
+);
+
+--> statement-breakpoint
+
+INSERT INTO packaging_components_v2
+SELECT id, packaging_id, name, description, unit, pack_price, pack_size,
+       qty_needed, waste_pct, sort_order
+FROM packaging_components;
+
+--> statement-breakpoint
+
+CREATE TABLE product_packaging_v2 (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  product_id   INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  packaging_id INTEGER NOT NULL REFERENCES packaging_sets(id) ON DELETE CASCADE,
+  qty          REAL NOT NULL DEFAULT 1
+);
+
+--> statement-breakpoint
+
+INSERT INTO product_packaging_v2 SELECT id, product_id, packaging_id, qty FROM product_packaging;
+
+--> statement-breakpoint
+
+DROP TABLE packaging_components;
+
+--> statement-breakpoint
+
+DROP TABLE product_packaging;
+
+--> statement-breakpoint
+
+DROP TABLE packaging;
+
+--> statement-breakpoint
+
+ALTER TABLE packaging_components_v2 RENAME TO packaging_components;
+
+--> statement-breakpoint
+
+ALTER TABLE product_packaging_v2 RENAME TO product_packaging;
+
+--> statement-breakpoint
+
+CREATE INDEX packaging_components_packaging_idx ON packaging_components(packaging_id);
+
+--> statement-breakpoint
+
+CREATE INDEX product_packaging_product_idx ON product_packaging(product_id);
+`,
+  },
 ];

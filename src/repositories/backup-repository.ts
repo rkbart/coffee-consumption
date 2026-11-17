@@ -2,7 +2,7 @@ import { db } from '../db/client';
 import {
   settings as settingsTable,
   ingredients as ingredientsTable,
-  packaging as packagingTable,
+  packagingSets as packagingSetsTable,
   packagingComponents as packagingComponentsTable,
   products as productsTable,
   recipeItems as recipeItemsTable,
@@ -121,11 +121,11 @@ export async function exportBackupCsv(): Promise<string> {
     lines.push(csvRow('ingredient', { name: row.name, category: row.category, unit: row.unit, pack_price: row.pack_price, pack_size: row.pack_size, waste_pct: row.waste_pct, sort_order: row.sort_order }));
   }
 
-  for (const row of await db.select().from(packagingTable).orderBy(packagingTable.sort_order, packagingTable.name, packagingTable.id)) {
-    lines.push(csvRow('packaging', { name: row.name, description: row.description, sort_order: row.sort_order, value: 'set-v2' }));
+  for (const row of await db.select().from(packagingSetsTable).orderBy(packagingSetsTable.sort_order, packagingSetsTable.packaging_name, packagingSetsTable.id)) {
+    lines.push(csvRow('packaging', { name: row.packaging_name, description: row.description, sort_order: row.sort_order, value: 'set-v2' }));
     for (const component of await db.select().from(packagingComponentsTable).where(eq(packagingComponentsTable.packaging_id, row.id)).orderBy(packagingComponentsTable.sort_order, packagingComponentsTable.id)) {
       lines.push(csvRow('packaging_component', {
-        packaging_name: row.name,
+        packaging_name: row.packaging_name,
         name: component.name,
         description: component.description,
         unit: component.unit,
@@ -151,8 +151,8 @@ export async function exportBackupCsv(): Promise<string> {
       lines.push(csvRow('recipe_item', { product_name: product.name, size_label: product.size_label, ingredient_name: ingredient?.name ?? '', qty: item.qty }));
     }
     for (const line of await db.select().from(productPackagingTable).where(eq(productPackagingTable.product_id, product.id)).orderBy(productPackagingTable.id)) {
-      const material = (await db.select().from(packagingTable).where(eq(packagingTable.id, line.packaging_id)))[0];
-      lines.push(csvRow('product_packaging', { product_name: product.name, size_label: product.size_label, packaging_name: material?.name ?? '', qty: line.qty }));
+      const material = (await db.select().from(packagingSetsTable).where(eq(packagingSetsTable.id, line.packaging_id)))[0];
+      lines.push(csvRow('product_packaging', { product_name: product.name, size_label: product.size_label, packaging_name: material?.packaging_name ?? '', qty: line.qty }));
     }
   }
 
@@ -229,14 +229,9 @@ export async function importBackupCsv(csv: string): Promise<{ ok: boolean; count
 
   const packagingIdByKey = new Map<string, number>();
   for (const { values } of packagingRows) {
-    const [row] = await db.insert(packagingTable).values({
-      name: values.name,
+    const [row] = await db.insert(packagingSetsTable).values({
+      packaging_name: values.name,
       description: values.description || '',
-      unit: 'pcs',
-      pack_price: 0,
-      pack_size: 1,
-      qty_needed: 1,
-      waste_pct: 0,
       sort_order: number(values.sort_order),
     }).returning();
     packagingIdByKey.set(values.name, row.id);

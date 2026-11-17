@@ -414,12 +414,12 @@ export default function Library() {
         <Modal
           open={Boolean(pendingDelete)}
           title="Remove packaging set?"
-          subtitle="Past recipes keep their snapshot, so cost history is not affected."
+          subtitle="This removes the set from the library and from any recipes that use it."
           onClose={() => setPendingDelete(null)}
         >
           <p className="text-sm leading-relaxed">
             <strong className="text-ink">{pendingDelete?.name}</strong> will be removed from your
-            packaging sets and from any recipes that use it.
+            packaging sets. Recipes using it will no longer include its packaging cost.
           </p>
           <div className="mt-4 flex justify-end gap-2">
             <button className="bg-surface border border-line rounded-lg px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1" onClick={() => setPendingDelete(null)}>

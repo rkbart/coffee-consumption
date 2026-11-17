@@ -4,7 +4,7 @@ import {
   recipeItems as recipeItemsTable,
   productPackaging as productPackagingTable,
   ingredients as ingredientsTable,
-  packaging as packagingTable,
+  packagingSets as packagingSetsTable,
 } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import type { Unit } from '../types';
@@ -44,7 +44,7 @@ export const productRepository = {
         db.select().from(recipeItemsTable).orderBy(recipeItemsTable.id),
         db.select().from(productPackagingTable).orderBy(productPackagingTable.id),
         db.select().from(ingredientsTable),
-        db.select().from(packagingTable),
+        db.select().from(packagingSetsTable),
       ]);
 
     const ingredientById = new Map(allIngredients.map((i) => [i.id, i]));
@@ -67,7 +67,7 @@ export const productRepository = {
       const material = packagingById.get(line.packaging_id);
       const enriched: ProductPackagingRow = {
         ...line,
-        packaging_name: material?.name ?? '',
+        packaging_name: material?.packaging_name ?? '',
         unit: 'pcs' as Unit,
       };
       if (!packagingByProduct.has(line.product_id))

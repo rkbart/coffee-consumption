@@ -2,7 +2,7 @@ import { db } from '../client';
 import { settings } from '../schema';
 import {
   ingredients as ingredientsTable,
-  packaging as packagingTable,
+  packagingSets as packagingSetsTable,
   products as productsTable,
   closings as closingsTable,
 } from '../schema';
@@ -45,7 +45,7 @@ export interface DataCounts {
 async function dataCounts(): Promise<DataCounts> {
   const [ingredients, packaging, products, closings] = await Promise.all([
     db.select().from(ingredientsTable),
-    db.select().from(packagingTable),
+    db.select().from(packagingSetsTable),
     db.select().from(productsTable),
     db.select().from(closingsTable),
   ]);

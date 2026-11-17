@@ -330,20 +330,25 @@ export function PackagingModal({
       setError("Give this packaging set a name, such as Medium.");
       return;
     }
-    if (rows.length === 0) {
-      setError("Add at least one component to this packaging set.");
-      return;
-    }
-
-    const errors = rows.map((r) => validateRow(r));
-    const firstError = errors.find((e) => e !== null);
-    if (firstError) {
-      setError(firstError as string);
-      return;
-    }
-
     setSaving(true);
     try {
+      if (rows.length === 0) {
+        if (!material) {
+          setError("Add at least one packaging item row before saving this set.");
+          return;
+        }
+        await api.deletePackaging(material.id);
+        onSaved(`${material.name} packaging set removed`);
+        return;
+      }
+
+      const errors = rows.map((r) => validateRow(r));
+      const firstError = errors.find((e) => e !== null);
+      if (firstError) {
+        setError(firstError as string);
+        return;
+      }
+
       const body: PackagingInput = {
         name: setName.trim(),
         description: setDescription.trim(),
@@ -399,7 +404,7 @@ export function PackagingModal({
         {error && <p className="text-sm text-red">{error}</p>}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="space-y-1">
-            <span className="block text-xs font-semibold uppercase tracking-wider text-ink-soft">Packaging set name</span>
+            <span className="block text-xs font-semibold uppercase tracking-wider text-ink-soft">Packaging name (set name)</span>
             <input
               value={setName}
               onChange={(event) => setSetName(event.target.value)}
@@ -460,7 +465,7 @@ export function PackagingModal({
                 <legend className="px-1 text-sm font-semibold text-ink">Component {index + 1}</legend>
                 <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[1.1fr_1fr_0.8fr_1fr_0.8fr_0.8fr_auto] xl:items-end">
                   <label className="min-w-0 space-y-1">
-                    <span className="block text-xs font-medium text-ink-soft">Component name</span>
+                    <span className="block text-xs font-medium text-ink-soft">Packaging item name</span>
                     <input value={r.name} onChange={(e) => updateField(r.id, "name", e.target.value)} placeholder="16 oz cup" className="w-full min-w-0 rounded-lg border border-line bg-surface px-3 py-2 text-ink" />
                   </label>
                   <label className="min-w-0 space-y-1">
@@ -513,7 +518,7 @@ export function PackagingModal({
             className="bg-surface border border-line rounded-lg px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
             onClick={addRow}
           >
-            + Add component row
+            + Add item row to {setName.trim() || "set"}
           </button>
           <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
             {material && (

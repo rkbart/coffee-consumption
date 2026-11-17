@@ -25,15 +25,11 @@ export const ingredients = sqliteTable('ingredients', {
   sort_order: integer('sort_order').notNull().default(0),
 });
 
-export const packaging = sqliteTable('packaging', {
+/** One row per named packaging set; its itemized costs live in packaging_components. */
+export const packagingSets = sqliteTable('packaging_sets', {
   id: integer('id').primaryKey(),
-  name: text('name').notNull(),
+  packaging_name: text('packaging_name').notNull(),
   description: text('description').notNull().default(''),
-  unit: text('unit').notNull().default('pcs'),
-  pack_price: real('pack_price').notNull().default(0),
-  pack_size: real('pack_size').notNull().default(1),
-  qty_needed: real('qty_needed').notNull().default(1),
-  waste_pct: real('waste_pct').notNull().default(0),
   sort_order: integer('sort_order').notNull().default(0),
 });
 
@@ -41,7 +37,7 @@ export const packagingComponents = sqliteTable('packaging_components', {
   id: integer('id').primaryKey(),
   packaging_id: integer('packaging_id')
     .notNull()
-    .references(() => packaging.id, { onDelete: 'cascade' }),
+    .references(() => packagingSets.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   description: text('description').notNull().default(''),
   unit: text('unit').notNull().default('pcs'),
@@ -88,7 +84,7 @@ export const productPackaging = sqliteTable('product_packaging', {
     .references(() => products.id, { onDelete: 'cascade' }),
   packaging_id: integer('packaging_id')
     .notNull()
-    .references(() => packaging.id, { onDelete: 'restrict' }),
+    .references(() => packagingSets.id, { onDelete: 'cascade' }),
   qty: real('qty').notNull().default(1),
 }, (t) => ({
   productIdx: index('product_packaging_product_idx').on(t.product_id),

@@ -12,7 +12,7 @@ export const businessTables = [
   'recipe_items',
   'products',
   'packaging_components',
-  'packaging',
+  'packaging_sets',
   'ingredients',
 ];
 

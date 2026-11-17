@@ -830,9 +830,6 @@ function BeverageModal({
             <span className="text-xs text-muted">Combined component cost per set</span>
           </div>
           {packLines.map((line, index) => {
-            const material = packagingMaterials.find(
-              (row) => row.id === Number(line.packaging_id),
-            );
             const costed = preview.packagingLines.find(
               (row) => row.line.packaging_id === Number(line.packaging_id),
             );
@@ -901,7 +898,7 @@ function BeverageModal({
                 ])
               }
             >
-              <IconPlus size={14} className="mr-1.5" /> Add packaging
+              <IconPlus size={14} className="mr-1.5" /> Add set to recipe
             </button>
           )}
         </div>

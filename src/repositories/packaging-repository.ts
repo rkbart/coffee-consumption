@@ -1,5 +1,5 @@
 import { db } from '../db/client';
-import { packaging, packagingComponents, productPackaging } from '../db/schema';
+import { packagingSets, packagingComponents, productPackaging } from '../db/schema';
 import type { PackagingComponent, PackagingMaterial, Unit } from '../types';
 import { eq } from 'drizzle-orm';
 
@@ -20,11 +20,11 @@ export interface PackagingSetInput {
 }
 
 const asPackagingMaterial = (
-  row: typeof packaging.$inferSelect,
+  row: typeof packagingSets.$inferSelect,
   components: PackagingComponent[],
 ): PackagingMaterial => ({
   id: row.id,
-  name: row.name,
+  name: row.packaging_name,
   description: row.description,
   sort_order: row.sort_order,
   components,
@@ -39,7 +39,7 @@ const componentValues = (packagingId: number, component: PackagingComponentInput
 export const packagingRepository = {
   async getAll(): Promise<PackagingMaterial[]> {
     const [sets, components] = await Promise.all([
-      db.select().from(packaging).orderBy(packaging.sort_order, packaging.name),
+      db.select().from(packagingSets).orderBy(packagingSets.sort_order, packagingSets.packaging_name),
       db.select().from(packagingComponents).orderBy(packagingComponents.sort_order, packagingComponents.id),
     ]);
     const componentsBySet = new Map<number, PackagingComponent[]>();
@@ -58,14 +58,40 @@ export const packagingRepository = {
   async create(data: PackagingSetInput): Promise<PackagingMaterial[]> {
     if (data.components.length === 0) throw new Error('A packaging set needs at least one component.');
     const id = await db.transaction(async (tx) => {
-      const [row] = await tx.insert(packaging).values({
-        name: data.name,
+      const normalizedName = data.name.trim().toLowerCase();
+      const existingSet = (await tx.select().from(packagingSets))
+        .find((row) => row.packaging_name.trim().toLowerCase() === normalizedName);
+
+      // A set name identifies one packaging set. If a user starts a new set
+      // with an existing name, add/update its component rows instead of
+      // creating another top-level library entry.
+      if (existingSet) {
+        await tx.update(packagingSets).set({
+          packaging_name: data.name,
+          description: data.description,
+        }).where(eq(packagingSets.id, existingSet.id));
+        const existingComponents = await tx.select().from(packagingComponents)
+          .where(eq(packagingComponents.packaging_id, existingSet.id));
+        let nextSortOrder = existingComponents.reduce((max, row) => Math.max(max, row.sort_order), -1) + 1;
+        for (const component of data.components) {
+          const match = existingComponents.find((row) =>
+            row.name.trim().toLowerCase() === component.name.trim().toLowerCase(),
+          );
+          if (match) {
+            await tx.update(packagingComponents)
+              .set({ ...component, sort_order: match.sort_order })
+              .where(eq(packagingComponents.id, match.id));
+          } else {
+            await tx.insert(packagingComponents).values(componentValues(existingSet.id, component, nextSortOrder++));
+          }
+        }
+        return existingSet.id;
+      }
+
+      const [row] = await tx.insert(packagingSets).values({
+        packaging_name: data.name,
         description: data.description,
-        unit: 'pcs',
-        pack_price: 0,
-        pack_size: 1,
-        qty_needed: 1,
-        waste_pct: 0,
+        sort_order: (await tx.select().from(packagingSets)).length,
       }).returning();
       for (const [index, component] of data.components.entries()) {
         await tx.insert(packagingComponents).values(componentValues(row.id, component, index));
@@ -78,10 +104,10 @@ export const packagingRepository = {
   async update(id: number, data: PackagingSetInput): Promise<PackagingMaterial[]> {
     if (data.components.length === 0) throw new Error('A packaging set needs at least one component.');
     const updatedId = await db.transaction(async (tx) => {
-      const [row] = await tx.update(packaging).set({
-        name: data.name,
+      const [row] = await tx.update(packagingSets).set({
+        packaging_name: data.name,
         description: data.description,
-      }).where(eq(packaging.id, id)).returning();
+      }).where(eq(packagingSets.id, id)).returning();
       if (!row) return null;
       await tx.delete(packagingComponents).where(eq(packagingComponents.packaging_id, id));
       for (const [index, component] of data.components.entries()) {
@@ -92,8 +118,13 @@ export const packagingRepository = {
     return updatedId === null ? [] : this.getById(updatedId);
   },
 
-  delete(id: number) {
-    return db.delete(packaging).where(eq(packaging.id, id));
+  async delete(id: number) {
+    await db.transaction(async (tx) => {
+      // Remove recipe links first so deleting a set also removes it from the
+      // recipes that used it instead of failing on the restrictive FK.
+      await tx.delete(productPackaging).where(eq(productPackaging.packaging_id, id));
+      await tx.delete(packagingSets).where(eq(packagingSets.id, id));
+    });
   },
 
   async mergeInto(targetId: number, sourceIds: number[]): Promise<void> {
@@ -101,7 +132,7 @@ export const packagingRepository = {
     if (ids.length === 0) return;
 
     await db.transaction(async (tx) => {
-      const target = (await tx.select().from(packaging).where(eq(packaging.id, targetId)))[0];
+      const target = (await tx.select().from(packagingSets).where(eq(packagingSets.id, targetId)))[0];
       if (!target) throw new Error('The packaging set to merge into no longer exists.');
 
       const targetComponents = await tx.select().from(packagingComponents)
@@ -109,7 +140,7 @@ export const packagingRepository = {
       let nextSortOrder = targetComponents.reduce((max, row) => Math.max(max, row.sort_order), -1) + 1;
 
       for (const sourceId of ids) {
-        const source = (await tx.select().from(packaging).where(eq(packaging.id, sourceId)))[0];
+        const source = (await tx.select().from(packagingSets).where(eq(packagingSets.id, sourceId)))[0];
         if (!source) continue;
 
         const components = await tx.select().from(packagingComponents)
@@ -139,7 +170,7 @@ export const packagingRepository = {
           }
         }
 
-        await tx.delete(packaging).where(eq(packaging.id, sourceId));
+        await tx.delete(packagingSets).where(eq(packagingSets.id, sourceId));
       }
     });
   },
