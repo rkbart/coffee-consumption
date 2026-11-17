@@ -337,7 +337,7 @@ export function PackagingModal({
     }
   };
 
-  const remove = async () => {
+  const removeMaterial = async () => {
     if (!material) return;
     try {
       await api.deletePackaging(material.id);
@@ -353,202 +353,138 @@ export function PackagingModal({
       title={isNew ? "New packaging" : "Edit packaging"}
       subtitle={isNew
         ? "Add one or more packaging materials at once. Total = (pack price ÷ pack size) × qty needed per drink."
-        : "Edit a pack of cups, lids, straws or bags."}
+        : "Edit this packaging material."}
       onClose={onClose}
       wide
     >
       <form onSubmit={submit} className="form">
-        {material ? (
-          <>
-            <label className="field">
-              <span>Name</span>
-              <input
-                value={rows[0].name}
-                onChange={(e) => updateField(rows[0].id, "name", e.target.value)}
-                autoFocus
-              />
-            </label>
-            <label className="field">
-              <span>Brand / description</span>
-              <input
-                value={rows[0].description}
-                onChange={(e) => updateField(rows[0].id, "description", e.target.value)}
-              />
-            </label>
-            <div className="form-grid">
-              <label className="field">
-                <span>Unit</span>
-                <select
-                  value={rows[0].unit}
-                  onChange={(e) => updateField(rows[0].id, "unit", e.target.value as Unit)}
-                >
-                  <option value="pcs">Pieces (pcs)</option>
-                  <option value="g">Grams (g)</option>
-                  <option value="ml">Millilitres (ml)</option>
-                </select>
-              </label>
-            </div>
-            <div className="form-section">
-              <div className="form-section-head">
-                <h3>Purchase data</h3>
-                <p>Used to turn a pack price into a cost per piece.</p>
-              </div>
-              <div className="form-grid three">
-                <label className="field">
-                  <span>Pack price</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={rows[0].packPrice}
-                    onChange={(e) => updateField(rows[0].id, "packPrice", e.target.value)}
-                  />
-                </label>
-                <label className="field">
-                  <span>Pack size</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    value={rows[0].packSize}
-                    onChange={(e) => updateField(rows[0].id, "packSize", e.target.value)}
-                  />
-                </label>
-                <label className="field">
-                  <span>Qty needed per drink</span>
-                  <input
-                    type="number"
-                    min="0.01"
-                    step="any"
-                    value={rows[0].qtyNeeded}
-                    onChange={(e) => updateField(rows[0].id, "qtyNeeded", e.target.value)}
-                  />
-                </label>
-              </div>
-            </div>
-            <div className="form-actions split">
-              <button type="button" className="btn btn-ghost-danger" onClick={remove}>
-                Delete
-              </button>
-              <div className="form-actions-right">
-                <button type="button" className="btn btn-quiet" onClick={onClose}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? "Saving…" : "Save packaging"}
-                </button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="packaging-rows-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Brand / description</th>
-                    <th>Pack price</th>
-                    <th>Pack size</th>
-                    <th>Unit</th>
-                    <th>Price / unit</th>
-                    <th>Qty / drink</th>
-                    <th>Total</th>
-                    <th />
+        <div className="packaging-rows-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Brand / description</th>
+                <th>Pack price</th>
+                <th>Pack size</th>
+                <th>Unit</th>
+                <th>Price / unit</th>
+                <th>Qty / drink</th>
+                <th>Total</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const { size, pricePerUnit, total } = rowStats(r);
+                return (
+                  <tr key={r.id} className="packaging-row">
+                    <td>
+                      <input
+                        value={r.name}
+                        onChange={(e) => updateField(r.id, "name", e.target.value)}
+                        placeholder="16 oz cup"
+                        autoFocus={rows.length === 1 && r.name === ""}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        value={r.description}
+                        onChange={(e) => updateField(r.id, "description", e.target.value)}
+                        placeholder="U-cup"
+                      />
+                    </td>
+                    <td className="numeric">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={r.packPrice}
+                        onChange={(e) => updateField(r.id, "packPrice", e.target.value)}
+                      />
+                    </td>
+                    <td className="numeric">
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={r.packSize}
+                        onChange={(e) => updateField(r.id, "packSize", e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <select
+                        value={r.unit}
+                        onChange={(e) => updateField(r.id, "unit", e.target.value as Unit)}
+                      >
+                        <option value="pcs">pcs</option>
+                        <option value="g">g</option>
+                        <option value="ml">ml</option>
+                      </select>
+                    </td>
+                    <td className="numeric">
+                      {size > 0 ? money(pricePerUnit) : "—"}
+                    </td>
+                    <td className="numeric">
+                      <input
+                        type="number"
+                        min="0.01"
+                        step="any"
+                        value={r.qtyNeeded}
+                        onChange={(e) => updateField(r.id, "qtyNeeded", e.target.value)}
+                      />
+                    </td>
+                    <td className="numeric">{money(total)}</td>
+                    <td className="actions">
+                      <button
+                        type="button"
+                        className="btn btn-ghost-danger btn-sm"
+                        onClick={
+                          material ? removeMaterial : () => removeRow(r.id)
+                        }
+                      >
+                        {material ? "Delete" : "Remove"}
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r) => {
-                    const { size, pricePerUnit, total } = rowStats(r);
-                    return (
-                      <tr key={r.id} className="packaging-row">
-                        <td>
-                          <input
-                            value={r.name}
-                            onChange={(e) => updateField(r.id, "name", e.target.value)}
-                            placeholder="16 oz cup"
-                          />
-                        </td>
-                        <td>
-                          <input
-                            value={r.description}
-                            onChange={(e) => updateField(r.id, "description", e.target.value)}
-                            placeholder="U-cup"
-                          />
-                        </td>
-                        <td className="numeric">
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={r.packPrice}
-                            onChange={(e) => updateField(r.id, "packPrice", e.target.value)}
-                          />
-                        </td>
-                        <td className="numeric">
-                          <input
-                            type="number"
-                            min="0"
-                            step="any"
-                            value={r.packSize}
-                            onChange={(e) => updateField(r.id, "packSize", e.target.value)}
-                          />
-                        </td>
-                        <td>
-                          <select
-                            value={r.unit}
-                            onChange={(e) => updateField(r.id, "unit", e.target.value as Unit)}
-                          >
-                            <option value="pcs">pcs</option>
-                            <option value="g">g</option>
-                            <option value="ml">ml</option>
-                          </select>
-                        </td>
-                        <td className="numeric">{size > 0 ? money(pricePerUnit) : "—"}</td>
-                        <td className="numeric">
-                          <input
-                            type="number"
-                            min="0.01"
-                            step="any"
-                            value={r.qtyNeeded}
-                            onChange={(e) => updateField(r.id, "qtyNeeded", e.target.value)}
-                          />
-                        </td>
-                        <td className="numeric">{money(total)}</td>
-                        <td>
-                          <button
-                            type="button"
-                            className="btn btn-ghost-danger btn-sm"
-                            onClick={() => removeRow(r.id)}
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              <div className="packaging-grand-total">
-                <span>Grand total</span>
-                <span>{money(grandTotal)}</span>
-              </div>
-            </div>
-            <div className="form-actions split">
-              <button type="button" className="btn btn-quiet" onClick={addRow}>
-                + Add another entry
+                );
+              })}
+            </tbody>
+          </table>
+          <div className="packaging-grand-total">
+            <span>Grand total</span>
+            <span>{money(grandTotal)}</span>
+          </div>
+        </div>
+
+        {!material && (
+          <div className="form-actions split">
+            <button type="button" className="btn btn-quiet" onClick={addRow}>
+              + Add another entry
+            </button>
+            <div className="form-actions-right">
+              <button type="button" className="btn btn-quiet" onClick={onClose}>
+                Cancel
               </button>
-              <div className="form-actions-right">
-                <button type="button" className="btn btn-quiet" onClick={onClose}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? "Saving…" : "Save all"}
-                </button>
-              </div>
+              <button type="submit" className="btn btn-primary" disabled={saving}>
+                {saving ? "Saving…" : "Save all"}
+              </button>
             </div>
-          </>
+          </div>
         )}
+
+        {material && (
+          <div className="form-actions split">
+            <div className="form-actions-right">
+              <button type="button" className="btn btn-quiet" onClick={onClose}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={saving}>
+                {saving ? "Saving…" : "Save changes"}
+              </button>
+            </div>
+          </div>
+        )}
+
         {error && <p className="form-error">{error}</p>}
       </form>
     </Modal>
