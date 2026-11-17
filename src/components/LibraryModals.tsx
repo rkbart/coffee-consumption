@@ -200,7 +200,7 @@ export function IngredientModal({
 
         {error && <p className="text-sm text-red">{error}</p>}
 
-        <div className="flex justify-end gap-2 pt-3 border-t border-line">
+        <div className="flex flex-col sm:flex-row gap-2 pt-3 border-t border-line sm:justify-end">
           {ingredient ? (
             <button
               type="button"
@@ -391,8 +391,9 @@ export function PackagingModal({
     >
       <form onSubmit={submit} className="space-y-3">
         {error && <p className="text-sm text-red">{error}</p>}
-        <div className="border border-line rounded-lg overflow-hidden">
-          <table className="w-full text-sm border-collapse">
+        <div className="border border-line rounded-lg overflow-x-auto overflow-y-hidden">
+          <div className="min-w-[640px] border-b border-line/50">
+            <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="text-left">
                 <th className="pb-2 font-medium text-ink-soft text-[10px] uppercase tracking-wider">Name</th>
@@ -490,13 +491,14 @@ export function PackagingModal({
               })}
             </tbody>
           </table>
+          </div>
           <div className="px-4 py-2 border-t border-line flex items-center justify-between">
             <span className="text-sm font-medium text-ink-soft">Grand total</span>
             <span className="text-sm font-bold text-accent-dark">{money(grandTotal)}</span>
           </div>
         </div>
 
-        <div className="flex justify-between items-center gap-2 pt-3 border-t border-line">
+        <div className="flex flex-col sm:flex-row gap-2 pt-3 border-t border-line sm:justify-between sm:items-center">
           <button
             type="button"
             className="bg-surface border border-line rounded-lg px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
@@ -504,7 +506,7 @@ export function PackagingModal({
           >
             + Add another entry
           </button>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
             {material && (
               <button
                 type="button"

@@ -15,7 +15,7 @@ export default function PageHeader({ eyebrow, title, description, actions }: Pag
         <h1 className="text-2xl font-serif font-medium text-ink">{title}</h1>
         {description && <p className="mt-1 text-muted text-sm">{description}</p>}
       </div>
-      {actions && <div className="flex items-end gap-2">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-end gap-2">{actions}</div>}
     </header>
   );
 }

@@ -307,7 +307,7 @@ export default function Inventory() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Shift</p>
-            <div className="flex gap-1" role="tablist" aria-label="Count shift">
+            <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Count shift">
               {SHIFTS.map((option) => {
                 const saved = dayShifts.find((row) => row.shift === option.id);
                 return (
@@ -452,7 +452,7 @@ export default function Inventory() {
                     {lines.map((line) => (
                       <tr key={line.ingredient.id} className="border-b border-line/50">
                         <td className="pb-3">
-                          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
                             <span
                               className={`w-2 h-2 rounded-full ${line.ingredient.unit === "g" ? "bg-green" : "bg-accent-dark"}`}
                             />
