@@ -225,65 +225,111 @@ export function PackagingModal({
   const isNew = editing === "new";
   const material = editing && editing !== "new" ? editing : null;
 
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [unit, setUnit] = useState<Unit>("pcs");
-  const [packPrice, setPackPrice] = useState("");
-  const [packSize, setPackSize] = useState("");
-  const [qtyNeeded, setQtyNeeded] = useState("1");
-  const [wastePct, setWastePct] = useState("0");
+  type Row = {
+    id: string;
+    name: string;
+    description: string;
+    unit: Unit;
+    packPrice: string;
+    packSize: string;
+    qtyNeeded: string;
+  };
+
+  const emptyRow = (): Row => ({
+    id: crypto.randomUUID(),
+    name: "",
+    description: "",
+    unit: "pcs",
+    packPrice: "",
+    packSize: "",
+    qtyNeeded: "1",
+  });
+
+  const rowFromMaterial = (m: PackagingMaterial): Row => ({
+    id: crypto.randomUUID(),
+    name: m.name,
+    description: m.description,
+    unit: m.unit,
+    packPrice: String(m.pack_price),
+    packSize: String(m.pack_size),
+    qtyNeeded: String(m.qty_needed),
+  });
+
+  const [rows, setRows] = useState<Row[]>(() =>
+    material ? [rowFromMaterial(material)] : [emptyRow()],
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!editing) return;
-    setName(material?.name ?? "");
-    setDescription(material?.description ?? "");
-    setUnit(material?.unit ?? "pcs");
-    setPackPrice(material?.pack_price ? String(material.pack_price) : "");
-    setPackSize(material?.pack_size ? String(material.pack_size) : "");
-    setQtyNeeded(String(material?.qty_needed ?? 1));
-    setWastePct(String(material?.waste_pct ?? 0));
-    setError("");
-  }, [editing, material]);
+  const addRow = () => setRows((prev) => [...prev, emptyRow()]);
+  const removeRow = (id: string) => setRows((prev) => prev.filter((r) => r.id !== id));
 
-  const price = Number(packPrice) || 0;
-  const size = Number(packSize) || 0;
-  const qty = Number(qtyNeeded) || 1;
-  const waste = Number(wastePct) || 0;
-  const netRecovery = size * (1 - waste / 100);
-  const unitCost = price > 0 && netRecovery > 0 ? price / netRecovery : null;
-  const totalCost = unitCost !== null ? unitCost * qty : null;
+  const updateField = (id: string, field: keyof Row, value: string) => {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+  };
+
+  const rowStats = (r: Row) => {
+    const price = Number(r.packPrice) || 0;
+    const size = Number(r.packSize) || 0;
+    const qty = Number(r.qtyNeeded) || 1;
+    const pricePerUnit = size > 0 ? price / size : 0;
+    const total = pricePerUnit * qty;
+    return { price, size, qty, pricePerUnit, total };
+  };
+
+  const grandTotal = rows.reduce((sum, r) => sum + rowStats(r).total, 0);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!name.trim()) {
-      setError("Give the packaging a name.");
-      return;
-    }
-    if (packPrice !== "" && !(size > 0)) {
-      setError("Enter how many pieces are in one pack.");
-      return;
-    }
-    if (!(qty > 0)) {
-      setError("Quantity needed must be greater than zero.");
-      return;
-    }
-    setSaving(true);
     setError("");
-    const body: PackagingInput = {
-      name: name.trim(),
-      description: description.trim(),
-      unit,
-      pack_price: price,
-      pack_size: size > 0 ? size : 1,
-      qty_needed: qty,
-      waste_pct: waste,
-    };
+
+    for (const r of rows) {
+      if (!r.name.trim()) {
+        setError("Give every packaging row a name.");
+        return;
+      }
+      const { price, size } = rowStats(r);
+      if (price > 0 && !(size > 0)) {
+        setError("Enter how many pieces are in one pack.");
+        return;
+      }
+      const qty = Number(r.qtyNeeded) || 1;
+      if (!(qty > 0)) {
+        setError("Quantity needed must be greater than zero.");
+        return;
+      }
+    }
+
+    setSaving(true);
     try {
-      if (material) await api.updatePackaging(material.id, body);
-      else await api.createPackaging(body);
-      onSaved(material ? `${body.name} updated` : `${body.name} added`);
+      if (material) {
+        const r = rows[0];
+        const body: PackagingInput = {
+          name: r.name.trim(),
+          description: r.description.trim(),
+          unit: r.unit,
+          pack_price: Number(r.packPrice) || 0,
+          pack_size: Number(r.packSize) || 1,
+          qty_needed: Number(r.qtyNeeded) || 1,
+          waste_pct: 0,
+        };
+        await api.updatePackaging(material.id, body);
+        onSaved(`${body.name} updated`);
+      } else {
+        for (const r of rows) {
+          const body: PackagingInput = {
+            name: r.name.trim(),
+            description: r.description.trim(),
+            unit: r.unit,
+            pack_price: Number(r.packPrice) || 0,
+            pack_size: Number(r.packSize) || 1,
+            qty_needed: Number(r.qtyNeeded) || 1,
+            waste_pct: 0,
+          };
+          await api.createPackaging(body);
+        }
+        onSaved(`${rows.length} packaging${rows.length === 1 ? "" : "s"} added`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save packaging");
     } finally {
@@ -305,118 +351,205 @@ export function PackagingModal({
     <Modal
       open={Boolean(editing)}
       title={isNew ? "New packaging" : "Edit packaging"}
-      subtitle="A pack of cups, lids, straws or bags. Price per piece × quantity needed = cost per drink."
+      subtitle={isNew
+        ? "Add one or more packaging materials at once. Total = (pack price ÷ pack size) × qty needed per drink."
+        : "Edit a pack of cups, lids, straws or bags."}
       onClose={onClose}
+      wide
     >
       <form onSubmit={submit} className="form">
-        <label className="field">
-          <span>Name</span>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="16 oz cup"
-            autoFocus
-          />
-        </label>
-
-        <label className="field">
-          <span>Brand / description</span>
-          <input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="ABC brand cups"
-          />
-        </label>
-
-        <div className="form-grid">
-          <label className="field">
-            <span>Counted in</span>
-            <select value={unit} onChange={(e) => setUnit(e.target.value as Unit)}>
-              <option value="pcs">Pieces (pcs)</option>
-              <option value="g">Grams (g)</option>
-              <option value="ml">Millilitres (ml)</option>
-            </select>
-          </label>
-          <label className="field">
-            <span>Waste %</span>
-            <input
-              type="number"
-              min="0"
-              max="100"
-              step="0.1"
-              value={wastePct}
-              onChange={(e) => setWastePct(e.target.value)}
-            />
-          </label>
-        </div>
-
-        <div className="form-section">
-          <div className="form-section-head">
-            <h3>Purchase data</h3>
-            <p>Used to turn a pack price into a cost per piece.</p>
-          </div>
-          <div className="form-grid three">
+        {material ? (
+          <>
             <label className="field">
-              <span>Pack price</span>
+              <span>Name</span>
               <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={packPrice}
-                onChange={(e) => setPackPrice(e.target.value)}
-                placeholder="110"
+                value={rows[0].name}
+                onChange={(e) => updateField(rows[0].id, "name", e.target.value)}
+                autoFocus
               />
             </label>
             <label className="field">
-              <span>Pack size ({unitLabel(unit)})</span>
+              <span>Brand / description</span>
               <input
-                type="number"
-                min="0"
-                step="any"
-                value={packSize}
-                onChange={(e) => setPackSize(e.target.value)}
-                placeholder="50"
+                value={rows[0].description}
+                onChange={(e) => updateField(rows[0].id, "description", e.target.value)}
               />
             </label>
-            <label className="field">
-              <span>Qty needed per drink</span>
-              <input
-                type="number"
-                min="0.01"
-                step="any"
-                value={qtyNeeded}
-                onChange={(e) => setQtyNeeded(e.target.value)}
-                placeholder="1"
-              />
-            </label>
-          </div>
-        </div>
-
-        <p className="cost-inline-note">
-          {totalCost !== null
-            ? `Price per piece: ${unitMoney(unitCost ?? 0)} · Qty needed: ${qty} · Total per drink: ${money(totalCost)}`
-            : "Add a pack price and pack size to cost this material."}
-        </p>
-
+            <div className="form-grid">
+              <label className="field">
+                <span>Unit</span>
+                <select
+                  value={rows[0].unit}
+                  onChange={(e) => updateField(rows[0].id, "unit", e.target.value as Unit)}
+                >
+                  <option value="pcs">Pieces (pcs)</option>
+                  <option value="g">Grams (g)</option>
+                  <option value="ml">Millilitres (ml)</option>
+                </select>
+              </label>
+            </div>
+            <div className="form-section">
+              <div className="form-section-head">
+                <h3>Purchase data</h3>
+                <p>Used to turn a pack price into a cost per piece.</p>
+              </div>
+              <div className="form-grid three">
+                <label className="field">
+                  <span>Pack price</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={rows[0].packPrice}
+                    onChange={(e) => updateField(rows[0].id, "packPrice", e.target.value)}
+                  />
+                </label>
+                <label className="field">
+                  <span>Pack size</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={rows[0].packSize}
+                    onChange={(e) => updateField(rows[0].id, "packSize", e.target.value)}
+                  />
+                </label>
+                <label className="field">
+                  <span>Qty needed per drink</span>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="any"
+                    value={rows[0].qtyNeeded}
+                    onChange={(e) => updateField(rows[0].id, "qtyNeeded", e.target.value)}
+                  />
+                </label>
+              </div>
+            </div>
+            <div className="form-actions split">
+              <button type="button" className="btn btn-ghost-danger" onClick={remove}>
+                Delete
+              </button>
+              <div className="form-actions-right">
+                <button type="button" className="btn btn-quiet" onClick={onClose}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {saving ? "Saving…" : "Save packaging"}
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="packaging-rows-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Brand / description</th>
+                    <th>Pack price</th>
+                    <th>Pack size</th>
+                    <th>Unit</th>
+                    <th>Price / unit</th>
+                    <th>Qty / drink</th>
+                    <th>Total</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => {
+                    const { size, pricePerUnit, total } = rowStats(r);
+                    return (
+                      <tr key={r.id} className="packaging-row">
+                        <td>
+                          <input
+                            value={r.name}
+                            onChange={(e) => updateField(r.id, "name", e.target.value)}
+                            placeholder="16 oz cup"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            value={r.description}
+                            onChange={(e) => updateField(r.id, "description", e.target.value)}
+                            placeholder="U-cup"
+                          />
+                        </td>
+                        <td className="numeric">
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={r.packPrice}
+                            onChange={(e) => updateField(r.id, "packPrice", e.target.value)}
+                          />
+                        </td>
+                        <td className="numeric">
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={r.packSize}
+                            onChange={(e) => updateField(r.id, "packSize", e.target.value)}
+                          />
+                        </td>
+                        <td>
+                          <select
+                            value={r.unit}
+                            onChange={(e) => updateField(r.id, "unit", e.target.value as Unit)}
+                          >
+                            <option value="pcs">pcs</option>
+                            <option value="g">g</option>
+                            <option value="ml">ml</option>
+                          </select>
+                        </td>
+                        <td className="numeric">{size > 0 ? money(pricePerUnit) : "—"}</td>
+                        <td className="numeric">
+                          <input
+                            type="number"
+                            min="0.01"
+                            step="any"
+                            value={r.qtyNeeded}
+                            onChange={(e) => updateField(r.id, "qtyNeeded", e.target.value)}
+                          />
+                        </td>
+                        <td className="numeric">{money(total)}</td>
+                        <td>
+                          <button
+                            type="button"
+                            className="btn btn-ghost-danger btn-sm"
+                            onClick={() => removeRow(r.id)}
+                          >
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <div className="packaging-grand-total">
+                <span>Grand total</span>
+                <span>{money(grandTotal)}</span>
+              </div>
+            </div>
+            <div className="form-actions split">
+              <button type="button" className="btn btn-quiet" onClick={addRow}>
+                + Add another entry
+              </button>
+              <div className="form-actions-right">
+                <button type="button" className="btn btn-quiet" onClick={onClose}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {saving ? "Saving…" : "Save all"}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
         {error && <p className="form-error">{error}</p>}
-
-        <div className="form-actions split">
-          {material ? (
-            <button type="button" className="btn btn-ghost-danger" onClick={remove}>
-              Delete
-            </button>
-          ) : (
-            <span />
-          )}
-          <div className="form-actions-right">
-            <button type="button" className="btn btn-quiet" onClick={onClose}>
-              Cancel
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? "Saving…" : "Save packaging"}
-            </button>
-          </div>
-        </div>
       </form>
     </Modal>
   );
